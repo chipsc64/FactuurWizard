@@ -13,6 +13,7 @@
             <!-- Elke pagina-viewmodel wordt automatisch met het bijbehorende scherm getoond. -->
             <DataTemplate DataType="{x:Type vm:FacturenViewModel}"><views:FacturenView /></DataTemplate>
             <DataTemplate DataType="{x:Type vm:FactuurBewerkenViewModel}"><views:FactuurBewerkenView /></DataTemplate>
+            <DataTemplate DataType="{x:Type vm:BtwOverzichtViewModel}"><views:BtwOverzichtView /></DataTemplate>
             <DataTemplate DataType="{x:Type vm:KlantenViewModel}"><views:KlantenView /></DataTemplate>
             <DataTemplate DataType="{x:Type vm:BedrijfsgegevensViewModel}"><views:BedrijfsgegevensView /></DataTemplate>
             <DataTemplate DataType="{x:Type vm:BtwTarievenViewModel}"><views:BtwTarievenView /></DataTemplate>

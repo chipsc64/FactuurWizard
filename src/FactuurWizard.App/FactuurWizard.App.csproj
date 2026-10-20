@@ -4,6 +4,7 @@
     <ProjectReference Include="..\FactuurWizard.Core\FactuurWizard.Core.csproj" />
     <ProjectReference Include="..\FactuurWizard.Data\FactuurWizard.Data.csproj" />
     <ProjectReference Include="..\FactuurWizard.Pdf\FactuurWizard.Pdf.csproj" />
+    <ProjectReference Include="..\FactuurWizard.Export\FactuurWizard.Export.csproj" />
   </ItemGroup>
 
   <ItemGroup>

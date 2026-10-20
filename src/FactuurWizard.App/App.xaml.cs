@@ -46,6 +46,7 @@ public partial class App : Application
                 services.AddTransient<FacturenViewModel>();
                 services.AddTransient<FactuurBewerkenViewModel>();
                 services.AddTransient<KlantenViewModel>();
+                services.AddTransient<BtwOverzichtViewModel>();
                 services.AddTransient<BedrijfsgegevensViewModel>();
                 services.AddTransient<BtwTarievenViewModel>();
                 services.AddTransient<ArtikelenViewModel>();

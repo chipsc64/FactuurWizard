@@ -13,6 +13,15 @@ public class DialoogService
         return dialoog.ShowDialog(Application.Current.MainWindow) == true ? dialoog.FileName : null;
     }
 
+    public string? KiesOpslaanAls(string titel, string filter, string bestandsnaam, string? startMap = null)
+    {
+        var dialoog = new SaveFileDialog
+        {
+            Title = titel, Filter = filter, FileName = bestandsnaam, InitialDirectory = startMap ?? "", AddExtension = true,
+        };
+        return dialoog.ShowDialog(Application.Current.MainWindow) == true ? dialoog.FileName : null;
+    }
+
     public string? KiesMap(string titel, string? startMap = null)
     {
         var dialoog = new OpenFolderDialog { Title = titel, InitialDirectory = startMap ?? "" };

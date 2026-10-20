@@ -28,6 +28,7 @@ public partial class ShellViewModel : ObservableObject
     [
         new("Administratie", "Facturen", typeof(FacturenViewModel)),
         new("Administratie", "Klanten", typeof(KlantenViewModel)),
+        new("Administratie", "Btw-overzicht", typeof(BtwOverzichtViewModel)),
         new("Inrichting", "Bedrijfsgegevens", typeof(BedrijfsgegevensViewModel)),
         new("Inrichting", "Btw-tarieven", typeof(BtwTarievenViewModel)),
         new("Inrichting", "Producten en diensten", typeof(ArtikelenViewModel)),
