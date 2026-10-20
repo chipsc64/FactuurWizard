@@ -139,8 +139,8 @@ public partial class FactuurBewerkenViewModel : PaginaViewModel
             var regels = new[]
             {
                 k.Contactpersoon.Length > 0 ? $"t.a.v. {k.Contactpersoon}" : "",
-                $"{a.Straat} {a.Huisnummer}".Trim(),
-                $"{a.Postcode} {a.Plaats}".Trim(),
+                a.StraatRegel,
+                a.PostcodePlaatsRegel,
                 a.Land is "" or "Nederland" ? "" : a.Land,
             };
             return string.Join(Environment.NewLine, regels.Where(r => r.Length > 0));

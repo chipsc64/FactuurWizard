@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:FactuurWizard.App.ViewModels"
              xmlns:c="clr-namespace:FactuurWizard.App.Converters"
+             xmlns:views="clr-namespace:FactuurWizard.App.Views"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
@@ -14,44 +15,7 @@
 
         <!-- Adresvelden; DataContext is een Adres. -->
         <DataTemplate x:Key="AdresVelden">
-            <StackPanel>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="8" />
-                        <ColumnDefinition Width="90" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel>
-                        <TextBlock Text="Straat" Style="{StaticResource Veldlabel}" />
-                        <TextBox Text="{Binding Straat}" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="2">
-                        <TextBlock Text="Huisnummer" Style="{StaticResource Veldlabel}" />
-                        <TextBox Text="{Binding Huisnummer}" />
-                    </StackPanel>
-                </Grid>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="90" />
-                        <ColumnDefinition Width="8" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="8" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel>
-                        <TextBlock Text="Postcode" Style="{StaticResource Veldlabel}" />
-                        <TextBox Text="{Binding Postcode}" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="2">
-                        <TextBlock Text="Plaats" Style="{StaticResource Veldlabel}" />
-                        <TextBox Text="{Binding Plaats}" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="4">
-                        <TextBlock Text="Land" Style="{StaticResource Veldlabel}" />
-                        <TextBox Text="{Binding Land}" />
-                    </StackPanel>
-                </Grid>
-            </StackPanel>
+            <views:AdresInvoer />
         </DataTemplate>
     </UserControl.Resources>
 

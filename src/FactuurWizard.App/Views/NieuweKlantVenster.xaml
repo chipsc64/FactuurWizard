@@ -1,6 +1,7 @@
 <Window x:Class="FactuurWizard.App.Views.NieuweKlantVenster"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:FactuurWizard.App.Views"
         Title="Nieuwe klant" Width="460" SizeToContent="Height"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False"
         Background="{StaticResource PaneelBrush}">
@@ -18,36 +19,7 @@
             <TextBox Text="{Binding Contactpersoon}" />
         </StackPanel>
 
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="8" />
-                <ColumnDefinition Width="90" />
-            </Grid.ColumnDefinitions>
-            <StackPanel>
-                <TextBlock Text="Straat" Style="{StaticResource Veldlabel}" />
-                <TextBox Text="{Binding Adres.Straat}" />
-            </StackPanel>
-            <StackPanel Grid.Column="2">
-                <TextBlock Text="Huisnummer" Style="{StaticResource Veldlabel}" />
-                <TextBox Text="{Binding Adres.Huisnummer}" />
-            </StackPanel>
-        </Grid>
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="90" />
-                <ColumnDefinition Width="8" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <StackPanel>
-                <TextBlock Text="Postcode" Style="{StaticResource Veldlabel}" />
-                <TextBox Text="{Binding Adres.Postcode}" />
-            </StackPanel>
-            <StackPanel Grid.Column="2">
-                <TextBlock Text="Plaats" Style="{StaticResource Veldlabel}" />
-                <TextBox Text="{Binding Adres.Plaats}" />
-            </StackPanel>
-        </Grid>
+        <local:AdresInvoer DataContext="{Binding Adres}" />
         <TextBlock Text="E-mailadres" Style="{StaticResource Veldlabel}" />
         <TextBox Text="{Binding Email}" />
 

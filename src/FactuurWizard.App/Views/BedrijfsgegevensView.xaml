@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:FactuurWizard.App.ViewModels"
              xmlns:c="clr-namespace:FactuurWizard.App.Converters"
+             xmlns:views="clr-namespace:FactuurWizard.App.Views"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
@@ -42,38 +43,7 @@
                         <TextBox Text="{Binding Profiel.BtwNummer}" />
 
                         <TextBlock Text="Adres" Style="{StaticResource Sectiekop}" />
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="8" />
-                                <ColumnDefinition Width="90" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <TextBlock Text="Straat" Style="{StaticResource Veldlabel}" />
-                                <TextBox Text="{Binding Profiel.Adres.Straat}" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="Huisnummer" Style="{StaticResource Veldlabel}" />
-                                <TextBox Text="{Binding Profiel.Adres.Huisnummer}" />
-                            </StackPanel>
-                        </Grid>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="90" />
-                                <ColumnDefinition Width="8" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <TextBlock Text="Postcode" Style="{StaticResource Veldlabel}" />
-                                <TextBox Text="{Binding Profiel.Adres.Postcode}" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="Plaats" Style="{StaticResource Veldlabel}" />
-                                <TextBox Text="{Binding Profiel.Adres.Plaats}" />
-                            </StackPanel>
-                        </Grid>
-                        <TextBlock Text="Land" Style="{StaticResource Veldlabel}" />
-                        <TextBox Text="{Binding Profiel.Adres.Land}" />
+                        <views:AdresInvoer DataContext="{Binding Profiel.Adres}" />
 
                         <TextBlock Text="Contact" Style="{StaticResource Sectiekop}" />
                         <TextBlock Text="E-mailadres" Style="{StaticResource Veldlabel}" />

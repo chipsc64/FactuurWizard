@@ -120,8 +120,8 @@ internal abstract class Briefopmaak : IDocument
                 }
 
                 Regel(l.Naam, vet: true);
-                Regel($"{l.Adres.Straat} {l.Adres.Huisnummer}".Trim());
-                Regel($"{l.Adres.Postcode} {l.Adres.Plaats}".Trim());
+                Regel(l.Adres.StraatRegel);
+                Regel(l.Adres.PostcodePlaatsRegel);
                 Regel(l.Adres.Land is "" or "Nederland" ? "" : l.Adres.Land);
                 Regel(Profiel.Telefoon);
                 Regel(l.Email);
@@ -140,8 +140,8 @@ internal abstract class Briefopmaak : IDocument
             col.Item().Text(k.Naam).SemiBold();
             if (k.Contactpersoon.Length > 0)
                 col.Item().Text($"t.a.v. {k.Contactpersoon}");
-            col.Item().Text($"{k.Adres.Straat} {k.Adres.Huisnummer}".Trim());
-            col.Item().Text($"{k.Adres.Postcode} {k.Adres.Plaats}".Trim());
+            col.Item().Text(k.Adres.StraatRegel);
+            col.Item().Text(k.Adres.PostcodePlaatsRegel);
             if (k.Adres.Land is not ("" or "Nederland"))
                 col.Item().Text(k.Adres.Land);
         });

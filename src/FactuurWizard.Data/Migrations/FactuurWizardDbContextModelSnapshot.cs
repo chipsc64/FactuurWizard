@@ -541,6 +541,10 @@ namespace FactuurWizard.Data.Migrations
                                 .IsRequired()
                                 .HasColumnType("TEXT");
 
+                            b1.Property<string>("Toevoeging")
+                                .IsRequired()
+                                .HasColumnType("TEXT");
+
                             b1.HasKey("BedrijfsprofielId");
 
                             b1.ToTable("Bedrijfsprofiel");
@@ -637,6 +641,10 @@ namespace FactuurWizard.Data.Migrations
                                         .IsRequired()
                                         .HasColumnType("TEXT");
 
+                                    b2.Property<string>("Toevoeging")
+                                        .IsRequired()
+                                        .HasColumnType("TEXT");
+
                                     b2.HasKey("PartijGegevensFactuurId");
 
                                     b2.ToTable("Factuur");
@@ -703,6 +711,10 @@ namespace FactuurWizard.Data.Migrations
                                         .HasColumnType("TEXT");
 
                                     b2.Property<string>("Straat")
+                                        .IsRequired()
+                                        .HasColumnType("TEXT");
+
+                                    b2.Property<string>("Toevoeging")
                                         .IsRequired()
                                         .HasColumnType("TEXT");
 
@@ -787,6 +799,10 @@ namespace FactuurWizard.Data.Migrations
                                 .IsRequired()
                                 .HasColumnType("TEXT");
 
+                            b1.Property<string>("Toevoeging")
+                                .IsRequired()
+                                .HasColumnType("TEXT");
+
                             b1.HasKey("KlantId");
 
                             b1.ToTable("Klant");
@@ -817,6 +833,10 @@ namespace FactuurWizard.Data.Migrations
                                 .HasColumnType("TEXT");
 
                             b1.Property<string>("Straat")
+                                .IsRequired()
+                                .HasColumnType("TEXT");
+
+                            b1.Property<string>("Toevoeging")
                                 .IsRequired()
                                 .HasColumnType("TEXT");
 
