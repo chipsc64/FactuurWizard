@@ -110,6 +110,60 @@ public sealed class FactuurServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Volledige_creditering_maakt_factuur_gecrediteerd_en_gedeeltelijke_verlaagt_openstaand()
+    {
+        var service = new FactuurService(_db);
+        var factuur = await service.MaakDefinitiefAsync(NieuwConcept(new(2026, 3, 1)).Id, DateTime.Now);
+
+        // Gedeeltelijk: alleen de eerste regel crediteren.
+        var deel = await service.MaakCreditfactuurAsync(factuur.Id, new(2026, 3, 5));
+        deel.Regels.RemoveAll(r => r.Volgorde == 2);
+        await _db.SaveChangesAsync();
+        await service.MaakDefinitiefAsync(deel.Id, DateTime.Now);
+
+        var gecrediteerd = await service.GecrediteerdAsync(factuur.Id);
+        Assert.Equal(-272.25m, gecrediteerd);
+        Assert.Equal(43.60m, factuur.OpenstaandBedrag(gecrediteerd));
+        Assert.Equal(BetaalStatus.Openstaand, factuur.BetaalStatusOp(new(2026, 3, 6), gecrediteerd));
+
+        // Rest crediteren.
+        var rest = await service.MaakCreditfactuurAsync(factuur.Id, new(2026, 3, 6));
+        rest.Regels.RemoveAll(r => r.Volgorde == 1);
+        await _db.SaveChangesAsync();
+        await service.MaakDefinitiefAsync(rest.Id, DateTime.Now);
+
+        Assert.Equal(BetaalStatus.Gecrediteerd, factuur.BetaalStatusOp(new(2026, 4, 1), await service.GecrediteerdAsync(factuur.Id)));
+    }
+
+    [Fact]
+    public async Task Herinneringen_lopen_op_tot_niveau_2_en_niet_na_betaling()
+    {
+        var service = new FactuurService(_db);
+        var factuur = await service.MaakDefinitiefAsync(NieuwConcept(new(2026, 3, 1)).Id, DateTime.Now);
+
+        Assert.Equal(1, (await service.MaakHerinneringAsync(factuur.Id, new(2026, 3, 20), 7)).Niveau);
+        Assert.Equal(2, (await service.MaakHerinneringAsync(factuur.Id, new(2026, 3, 30), 7)).Niveau);
+        Assert.Equal(2, (await service.MaakHerinneringAsync(factuur.Id, new(2026, 4, 10), 7)).Niveau);
+
+        await service.ZetBetaaldAsync(factuur.Id, new(2026, 4, 12));
+        await Assert.ThrowsAsync<FactuurException>(() => service.MaakHerinneringAsync(factuur.Id, new(2026, 4, 20), 7));
+    }
+
+    [Fact]
+    public async Task Kopie_is_nieuw_concept_met_dezelfde_regels()
+    {
+        var service = new FactuurService(_db);
+        var factuur = await service.MaakDefinitiefAsync(NieuwConcept(new(2026, 3, 1)).Id, DateTime.Now);
+
+        var kopie = await service.MaakKopieAsync(factuur.Id, new(2026, 5, 1), 30);
+
+        Assert.Equal(FactuurStatus.Concept, kopie.Status);
+        Assert.Null(kopie.Factuurnummer);
+        Assert.Equal(factuur.KlantId, kopie.KlantId);
+        Assert.Equal(factuur.Regels.Select(r => r.Omschrijving), kopie.Regels.Select(r => r.Omschrijving));
+    }
+
+    [Fact]
     public async Task Betaalstatus_volgt_vervaldatum_en_betaling()
     {
         var factuur = await new FactuurService(_db).MaakDefinitiefAsync(NieuwConcept(new(2026, 3, 1)).Id, DateTime.Now);

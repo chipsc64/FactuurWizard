@@ -52,6 +52,29 @@ public class FactuurDocumenten(Opslaglocatie opslag)
         return pad;
     }
 
+    /// <summary>Geeft het pad van de PDF van een herinnering en maakt hem als hij (nog) niet bestaat.</summary>
+    public async Task<string> ZorgVoorHerinneringPdfAsync(
+        FactuurWizardDbContext db, Factuur factuur, Herinnering herinnering, decimal openstaandBedrag)
+    {
+        if (herinnering.PdfBestand is { } relatief && Path.Combine(opslag.DataMap, relatief) is var bestaand && File.Exists(bestaand))
+            return bestaand;
+
+        var factuurInvoer = await MaakInvoerAsync(db, factuur);
+        var invoer = new HerinneringDocumentInvoer(factuur, herinnering, openstaandBedrag, factuurInvoer.Profiel,
+            factuurInvoer.Briefpapier, factuurInvoer.Teksten, factuurInvoer.Klantnummer);
+        var pdf = await Task.Run(() => FactuurPdf.GenereerHerinnering(invoer));
+
+        var map = Path.Combine(opslag.FactuurMap(factuur.Jaar ?? factuur.Factuurdatum.Year), "Herinneringen");
+        Directory.CreateDirectory(map);
+        var soort = herinnering.Niveau >= 2 ? "tweede herinnering" : "herinnering";
+        var pad = UniekPad(map, $"{factuur.Factuurnummer} {soort} {herinnering.Datum:yyyy-MM-dd}");
+        await File.WriteAllBytesAsync(pad, pdf);
+
+        herinnering.PdfBestand = Path.GetRelativePath(opslag.DataMap, pad);
+        await db.SaveChangesAsync();
+        return pad;
+    }
+
     /// <summary>Maakt een tijdelijke PDF (met watermerk) van een concept of voorbeeld.</summary>
     public async Task<string> MaakTijdelijkePdfAsync(FactuurDocumentInvoer invoer, string naam)
     {
@@ -63,7 +86,13 @@ public class FactuurDocumenten(Opslaglocatie opslag)
         return pad;
     }
 
-    public static void Open(string pad) => Process.Start(new ProcessStartInfo(pad) { UseShellExecute = true });
+    public static void Open(string pad)
+    {
+        // Voor geautomatiseerde tests: geen PDF-lezer openen.
+        if (Environment.GetEnvironmentVariable("FACTUURWIZARD_NIET_OPENEN") == "1")
+            return;
+        Process.Start(new ProcessStartInfo(pad) { UseShellExecute = true });
+    }
 
     public static void ToonInVerkenner(string pad) => Process.Start("explorer.exe", $"/select,\"{pad}\"");
 

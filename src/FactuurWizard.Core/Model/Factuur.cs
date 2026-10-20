@@ -51,14 +51,21 @@ public class Factuur
     /// <summary>Betaalreferentie is gelijk aan het factuurnummer.</summary>
     public string? Betaalreferentie => Factuurnummer;
 
-    public BetaalStatus BetaalStatusOp(DateOnly vandaag)
+    /// <param name="gecrediteerd">Som van de (negatieve) totalen van definitieve creditfacturen op deze factuur.</param>
+    public BetaalStatus BetaalStatusOp(DateOnly vandaag, decimal gecrediteerd = 0)
     {
-        if (Status != FactuurStatus.Definitief || TotaalInclBtw <= 0)
+        if (Status != FactuurStatus.Definitief || Soort != FactuurSoort.Factuur || TotaalInclBtw <= 0)
             return BetaalStatus.NietVanToepassing;
         if (BetaaldOp is not null)
             return BetaalStatus.Betaald;
+        if (OpenstaandBedrag(gecrediteerd) <= 0)
+            return BetaalStatus.Gecrediteerd;
         return vandaag > Vervaldatum ? BetaalStatus.Vervallen : BetaalStatus.Openstaand;
     }
+
+    /// <summary>Nog te betalen bedrag: het totaal verminderd met gecrediteerde bedragen; 0 als de factuur betaald is.</summary>
+    public decimal OpenstaandBedrag(decimal gecrediteerd = 0) =>
+        BetaaldOp is not null ? 0m : Math.Max(0m, TotaalInclBtw + gecrediteerd);
 }
 
 public class PartijGegevens

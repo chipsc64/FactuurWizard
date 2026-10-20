@@ -59,6 +59,25 @@ public class FactuurPdfTests
         Assert.Equal("%PDF"u8.ToArray(), pdf[..4]);
     }
 
+    [Fact]
+    public void Herinnering_geeft_een_pdf()
+    {
+        var factuur = Voorbeeldfactuur.Maak(Profiel(), new Briefpapier(), Teksten).Factuur;
+        var teksten = new Dictionary<TekstSoort, string>
+        {
+            [TekstSoort.Herinnering1Tekst] = "Factuur {Factuurnummer} van {TotaalInclBtw} is nog niet betaald. Betaal binnen {Termijn} dagen.",
+        };
+        var invoer = new HerinneringDocumentInvoer(factuur, new Herinnering { Niveau = 1, Datum = new(2026, 11, 20), BetalingstermijnDagen = 7 },
+            123.45m, Profiel(), new Briefpapier(), teksten, 1001);
+
+        var pdf = FactuurPdf.GenereerHerinnering(invoer);
+
+        Assert.Equal("%PDF"u8.ToArray(), pdf[..4]);
+        var map = Path.Combine(Path.GetTempPath(), "FactuurWizardTest");
+        Directory.CreateDirectory(map);
+        File.WriteAllBytes(Path.Combine(map, "herinnering.png"), FactuurPdf.GenereerHerinneringAfbeeldingen(invoer, 110)[0]);
+    }
+
     /// <summary>Schrijft een voorbeeld naar de tijdelijke map, om de opmaak te kunnen bekijken.</summary>
     [Fact]
     public void Voorbeeld_naar_tijdelijke_map()

@@ -26,10 +26,10 @@ public class Mailer
     private const int SuccessSuccess = 0;
     private const int MapiUserAbort = 1;
 
-    public async Task<MailResultaat> NieuwBerichtAsync(string? aan, string onderwerp, string tekst, string bijlage)
+    public async Task<MailResultaat> NieuwBerichtAsync(string? aan, string onderwerp, string tekst, params IReadOnlyList<string> bijlagen)
     {
         // Simple MAPI blokkeert tot het opstelvenster gesloten is (bij sommige programma's); daarom op een eigen STA-thread.
-        var resultaat = await Task.Factory.StartNew(() => VerstuurViaMapi(aan, onderwerp, tekst, bijlage),
+        var resultaat = await Task.Factory.StartNew(() => VerstuurViaMapi(aan, onderwerp, tekst, bijlagen),
             CancellationToken.None, TaskCreationOptions.LongRunning, StaTaakplanner.Instantie);
 
         switch (resultaat)
@@ -40,7 +40,7 @@ public class Mailer
                 return MailResultaat.Geannuleerd;
             default:
                 OpenMailto(aan, onderwerp, tekst);
-                FactuurDocumenten.ToonInVerkenner(bijlage);
+                FactuurDocumenten.ToonInVerkenner(bijlagen[0]);
                 return MailResultaat.ZonderBijlage;
         }
     }
@@ -52,10 +52,12 @@ public class Mailer
         Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
     }
 
-    private static int VerstuurViaMapi(string? aan, string onderwerp, string tekst, string bijlage)
+    private static int VerstuurViaMapi(string? aan, string onderwerp, string tekst, IReadOnlyList<string> bijlagen)
     {
         var ontvangers = IntPtr.Zero;
         var bestanden = IntPtr.Zero;
+        var bestandGrootte = Marshal.SizeOf<MapiFileDesc>();
+        var geschreven = 0;
         try
         {
             var bericht = new MapiMessage { Subject = onderwerp, NoteText = tekst };
@@ -68,9 +70,14 @@ public class Mailer
                 bericht.Recips = ontvangers;
             }
 
-            bestanden = Marshal.AllocHGlobal(Marshal.SizeOf<MapiFileDesc>());
-            Marshal.StructureToPtr(new MapiFileDesc { Position = -1, PathName = bijlage, FileName = Path.GetFileName(bijlage) }, bestanden, false);
-            bericht.FileCount = 1;
+            // De bijlagen staan als aaneengesloten array van MapiFileDesc in het geheugen.
+            bestanden = Marshal.AllocHGlobal(bestandGrootte * bijlagen.Count);
+            for (; geschreven < bijlagen.Count; geschreven++)
+                Marshal.StructureToPtr(new MapiFileDesc
+                {
+                    Position = -1, PathName = bijlagen[geschreven], FileName = Path.GetFileName(bijlagen[geschreven]),
+                }, bestanden + geschreven * bestandGrootte, false);
+            bericht.FileCount = bijlagen.Count;
             bericht.Files = bestanden;
 
             return MAPISendMailW(IntPtr.Zero, IntPtr.Zero, bericht, MapiLogonUi | MapiDialog, 0);
@@ -89,7 +96,8 @@ public class Mailer
             }
             if (bestanden != IntPtr.Zero)
             {
-                Marshal.DestroyStructure<MapiFileDesc>(bestanden);
+                for (var i = 0; i < geschreven; i++)
+                    Marshal.DestroyStructure<MapiFileDesc>(bestanden + i * bestandGrootte);
                 Marshal.FreeHGlobal(bestanden);
             }
         }

@@ -53,6 +53,8 @@ public enum BetaalStatus
     Openstaand = 1,
     Vervallen = 2,
     Betaald = 3,
+    /// <summary>Volledig verrekend met een of meer creditfacturen.</summary>
+    Gecrediteerd = 4,
 }
 
 public enum TekstSoort

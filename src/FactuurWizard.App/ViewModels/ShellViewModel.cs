@@ -5,7 +5,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FactuurWizard.App.ViewModels;
 
-public sealed record NavigatieItem(string Groep, string Titel, Type PaginaType);
+public sealed record NavigatieItem(string Groep, string Titel, Type PaginaType)
+{
+    // Leesbare naam voor schermlezers (UI Automation gebruikt ToString).
+    public override string ToString() => Titel;
+}
 
 public partial class ShellViewModel : ObservableObject
 {

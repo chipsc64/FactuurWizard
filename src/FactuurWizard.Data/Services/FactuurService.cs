@@ -120,4 +120,91 @@ public class FactuurService(FactuurWizardDbContext db)
         await db.SaveChangesAsync();
         return credit;
     }
+
+    /// <summary>Som van de totalen van definitieve creditfacturen op een factuur (negatief of 0).</summary>
+    public async Task<decimal> GecrediteerdAsync(int factuurId)
+    {
+        // Optellen in het geheugen: SQLite kan decimals niet betrouwbaar sommeren.
+        var bedragen = await db.Facturen
+            .Where(f => f.OrigineleFactuurId == factuurId && f.Status == FactuurStatus.Definitief)
+            .Select(f => f.TotaalInclBtw)
+            .ToListAsync();
+        return bedragen.Sum();
+    }
+
+    /// <summary>Legt de betaaldatum vast, of maakt de betaling ongedaan met null.</summary>
+    public async Task ZetBetaaldAsync(int factuurId, DateOnly? betaaldOp)
+    {
+        var factuur = await db.Facturen.SingleAsync(f => f.Id == factuurId);
+        if (factuur.Status != FactuurStatus.Definitief || factuur.Soort != FactuurSoort.Factuur)
+            throw new FactuurException("Alleen bij een definitieve factuur kan de betaling worden vastgelegd.");
+        if (betaaldOp < factuur.Factuurdatum)
+            throw new FactuurException("De betaaldatum ligt vóór de factuurdatum.");
+        factuur.BetaaldOp = betaaldOp;
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Legt een betalingsherinnering vast. De eerste is een herinnering, daarna volgt de tweede herinnering/aanmaning
+    /// (een volgende keer blijft het niveau 2).
+    /// </summary>
+    public async Task<Herinnering> MaakHerinneringAsync(int factuurId, DateOnly datum, int betalingstermijnDagen)
+    {
+        var factuur = await db.Facturen.Include(f => f.Herinneringen).SingleAsync(f => f.Id == factuurId);
+        var status = factuur.BetaalStatusOp(datum, await GecrediteerdAsync(factuurId));
+        if (status is not (BetaalStatus.Openstaand or BetaalStatus.Vervallen))
+            throw new FactuurException("Voor deze factuur staat geen bedrag meer open.");
+        if (betalingstermijnDagen is < 1 or > 60)
+            throw new FactuurException("De termijn van een herinnering moet tussen 1 en 60 dagen liggen.");
+
+        var herinnering = new Herinnering
+        {
+            FactuurId = factuurId,
+            Niveau = Math.Min(2, factuur.Herinneringen.Count + 1),
+            Datum = datum,
+            BetalingstermijnDagen = betalingstermijnDagen,
+        };
+        factuur.Herinneringen.Add(herinnering);
+        await db.SaveChangesAsync();
+        return herinnering;
+    }
+
+    /// <summary>
+    /// Maakt een nieuwe conceptfactuur met dezelfde klant en regels. Btw-percentages worden bij het
+    /// bewerken opnieuw bepaald op de nieuwe factuurdatum.
+    /// </summary>
+    public async Task<Factuur> MaakKopieAsync(int factuurId, DateOnly factuurdatum, int standaardTermijn)
+    {
+        var bron = await db.Facturen.Include(f => f.Regels).Include(f => f.Klant).SingleAsync(f => f.Id == factuurId);
+        if (bron.Soort != FactuurSoort.Factuur)
+            throw new FactuurException("Een creditfactuur kan niet als basis voor een nieuwe factuur dienen.");
+
+        var kopie = new Factuur
+        {
+            Soort = FactuurSoort.Factuur,
+            Status = FactuurStatus.Concept,
+            KlantId = bron.KlantId,
+            Factuurdatum = factuurdatum,
+            BetalingstermijnDagen = bron.Klant?.BetalingstermijnDagen ?? standaardTermijn,
+            Taal = bron.Taal,
+            Valuta = bron.Valuta,
+            BriefpapierId = bron.BriefpapierId,
+            Opmerking = bron.Opmerking,
+            Regels = bron.Regels.OrderBy(r => r.Volgorde).Select(r => new Factuurregel
+            {
+                Volgorde = r.Volgorde,
+                Soort = r.Soort,
+                ArtikelId = r.ArtikelId,
+                Artikelnummer = r.Artikelnummer,
+                Omschrijving = r.Omschrijving,
+                Aantal = r.Aantal,
+                Eenheid = r.Eenheid,
+                PrijsExclBtw = r.PrijsExclBtw,
+                BtwGroepId = r.BtwGroepId,
+            }).ToList(),
+        };
+        db.Facturen.Add(kopie);
+        await db.SaveChangesAsync();
+        return kopie;
+    }
 }

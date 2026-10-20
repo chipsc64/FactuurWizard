@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="FactuurWizard.App.Views.FactuurBewerkenView"
+<UserControl x:Class="FactuurWizard.App.Views.FactuurBewerkenView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:FactuurWizard.App.ViewModels"
@@ -35,8 +35,10 @@
                     <Button Content="PDF openen" Style="{StaticResource PrimaireKnop}" Command="{Binding PdfOpenenCommand}" />
                     <Button Content="E-mailen" Command="{Binding EmailenCommand}" />
                 </StackPanel>
-                <Button Content="Creditfactuur maken" Command="{Binding MaakCreditfactuurCommand}"
-                        Visibility="{Binding KanCrediteren, Converter={StaticResource Zichtbaar}}" />
+                <StackPanel Orientation="Horizontal" Visibility="{Binding KanCrediteren, Converter={StaticResource Zichtbaar}}">
+                    <Button Content="Creditfactuur maken" Command="{Binding MaakCreditfactuurCommand}" />
+                    <Button Content="Kopiëren als nieuwe factuur" Command="{Binding KopieCommand}" />
+                </StackPanel>
             </StackPanel>
             <TextBlock Text="{Binding Melding}" Style="{StaticResource Melding}" />
         </StackPanel>
@@ -117,9 +119,60 @@
                 <ColumnDefinition Width="360" />
             </Grid.ColumnDefinitions>
             <StackPanel>
-                <TextBlock Text="Opmerking op de factuur (optioneel)" Style="{StaticResource Veldlabel}" />
-                <TextBox Text="{Binding Opmerking}" Style="{StaticResource MeerregeligeTekst}" MinHeight="60"
-                         IsReadOnly="{Binding IsDefinitief}" />
+                <StackPanel Visibility="{Binding ToonOpmerking, Converter={StaticResource Zichtbaar}}">
+                    <TextBlock Text="Opmerking op de factuur (optioneel)" Style="{StaticResource Veldlabel}" />
+                    <TextBox Text="{Binding Opmerking}" Style="{StaticResource MeerregeligeTekst}" MinHeight="60"
+                             IsReadOnly="{Binding IsDefinitief}" />
+                </StackPanel>
+            <!-- Betaling en herinneringen (alleen bij een definitieve factuur) -->
+            <Border Style="{StaticResource Paneel}" Padding="16,12"
+                    Visibility="{Binding ToonBetaling, Converter={StaticResource Zichtbaar}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel>
+                        <TextBlock Text="Betaling" Style="{StaticResource Sectiekop}" Margin="0,0,0,6" />
+                        <TextBlock Text="{Binding BetaalstatusTekst}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                        <StackPanel Orientation="Horizontal" Visibility="{Binding KanBetaaldMarkeren, Converter={StaticResource Zichtbaar}}">
+                            <DatePicker SelectedDate="{Binding BetaaldOpInvoer}" Width="140" Margin="0,0,8,0" VerticalAlignment="Center" />
+                            <Button Content="Markeer als betaald" Command="{Binding MarkeerBetaaldCommand}" />
+                        </StackPanel>
+                        <Button Content="Betaling ongedaan maken" HorizontalAlignment="Left" Command="{Binding BetalingOngedaanCommand}"
+                                Visibility="{Binding IsBetaald, Converter={StaticResource Zichtbaar}}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Herinneringen" Style="{StaticResource Sectiekop}" Margin="0,0,0,6" />
+                        <ListBox ItemsSource="{Binding Herinneringen}" SelectedItem="{Binding GeselecteerdeHerinnering}"
+                                 DisplayMemberPath="Omschrijving" MaxHeight="72" Margin="0,0,0,8" BorderBrush="{StaticResource RandBrush}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.Style>
+                                <Style TargetType="ListBox">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Herinneringen.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListBox.Style>
+                        </ListBox>
+                        <WrapPanel>
+                            <StackPanel Orientation="Horizontal" Visibility="{Binding KanHerinneren, Converter={StaticResource Zichtbaar}}">
+                                <TextBlock Text="Termijn" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                <TextBox Text="{Binding HerinneringTermijn}" Width="40" Margin="0,0,4,0" />
+                                <TextBlock Text="dagen" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                <Button Content="Herinnering maken" Command="{Binding MaakHerinneringCommand}" />
+                            </StackPanel>
+                            <Button Content="Openen" Command="{Binding HerinneringOpenenCommand}" />
+                            <Button Content="E-mailen" Command="{Binding HerinneringEmailenCommand}" />
+                        </WrapPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
             </StackPanel>
             <Border Grid.Column="2" Style="{StaticResource Paneel}" Padding="16,12">
                 <Grid>

@@ -6,6 +6,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:FacturenViewModel}">
+    <UserControl.Resources>
+        <Style x:Key="Rechts" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+        </Style>
+    </UserControl.Resources>
+
     <DockPanel>
         <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
             <StackPanel Orientation="Horizontal">
@@ -17,9 +24,31 @@
         </StackPanel>
 
         <StackPanel DockPanel.Dock="Top">
-            <TextBlock Text="Zoeken op factuurnummer of klant" Style="{StaticResource Veldlabel}" />
-            <TextBox Text="{Binding Zoekterm, UpdateSourceTrigger=PropertyChanged}" MaxWidth="400" HorizontalAlignment="Left" Width="400" />
-            <CheckBox Content="Alleen concepten tonen" IsChecked="{Binding AlleenConcepten}" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MaxWidth="400" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="130" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Zoeken op nummer, klant of bedrag" Style="{StaticResource Veldlabel}" />
+                    <TextBox Text="{Binding Zoekterm, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Status" Style="{StaticResource Veldlabel}" />
+                    <ComboBox ItemsSource="{Binding StatusFilters}" DisplayMemberPath="Omschrijving"
+                              SelectedValuePath="Waarde" SelectedValue="{Binding GekozenStatus}" />
+                </StackPanel>
+                <StackPanel Grid.Column="4">
+                    <TextBlock Text="Jaar" Style="{StaticResource Veldlabel}" />
+                    <ComboBox ItemsSource="{Binding Jaren}" DisplayMemberPath="Omschrijving"
+                              SelectedValuePath="Waarde" SelectedValue="{Binding GekozenJaar}" />
+                </StackPanel>
+            </Grid>
+            <TextBlock Text="{Binding Samenvatting}" FontWeight="SemiBold" Margin="0,0,0,10" />
         </StackPanel>
 
         <DataGrid ItemsSource="{Binding FacturenView}" SelectedItem="{Binding Geselecteerd}"
@@ -27,20 +56,30 @@
             <DataGrid.InputBindings>
                 <MouseBinding Gesture="LeftDoubleClick" Command="{Binding OpenenCommand}" />
             </DataGrid.InputBindings>
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsVervallen}" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource FoutBrush}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsConcept}" Value="True">
+                            <Setter Property="FontStyle" Value="Italic" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Nummer" Binding="{Binding Nummer}" Width="100" />
-                <DataGridTextColumn Header="Datum" Binding="{Binding Datum, StringFormat={}{0:dd-MM-yyyy}}" Width="100" />
+                <DataGridTextColumn Header="Nummer" Binding="{Binding Nummer}" Width="90" />
+                <DataGridTextColumn Header="Datum" Binding="{Binding Datum, StringFormat={}{0:dd-MM-yyyy}}" Width="90" />
                 <DataGridTextColumn Header="Klant" Binding="{Binding Klant}" Width="*" />
-                <DataGridTextColumn Header="Soort" Binding="{Binding Soort}" Width="110" />
-                <DataGridTextColumn Header="Totaal incl. btw" Binding="{Binding TotaalInclBtw, StringFormat=C}" Width="130">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="HorizontalAlignment" Value="Right" />
-                            <Setter Property="Margin" Value="0,0,8,0" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100" />
+                <DataGridTextColumn Header="Soort" Binding="{Binding Soort}" Width="100" />
+                <DataGridTextColumn Header="Totaal" Binding="{Binding TotaalInclBtw, StringFormat=C}" Width="100"
+                                    ElementStyle="{StaticResource Rechts}" />
+                <DataGridTextColumn Header="Vervaldatum" Binding="{Binding Vervaldatum, StringFormat={}{0:dd-MM-yyyy}}" Width="95" />
+                <DataGridTextColumn Header="Openstaand" Binding="{Binding OpenstaandTekst, Mode=OneWay}" Width="100"
+                                    ElementStyle="{StaticResource Rechts}" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status, Mode=OneWay}" Width="95" />
+                <DataGridTextColumn Header="Herinn." Binding="{Binding HerinneringenTekst, Mode=OneWay}" Width="60" />
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>

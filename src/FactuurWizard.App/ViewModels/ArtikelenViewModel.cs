@@ -10,7 +10,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FactuurWizard.App.ViewModels;
 
-public sealed record Keuze<T>(T Waarde, string Omschrijving);
+public sealed record Keuze<T>(T Waarde, string Omschrijving)
+{
+    public override string ToString() => Omschrijving;
+}
 
 public partial class ArtikelenViewModel : PaginaViewModel
 {

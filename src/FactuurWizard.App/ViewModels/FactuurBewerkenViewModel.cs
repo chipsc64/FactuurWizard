@@ -12,6 +12,15 @@ namespace FactuurWizard.App.ViewModels;
 
 public sealed record BtwRegelWeergave(string Omschrijving, decimal Grondslag, decimal Btw);
 
+public sealed record HerinneringItem(Herinnering Herinnering)
+{
+    public string Omschrijving =>
+        $"{Herinnering.Datum:d-M-yyyy}  {(Herinnering.Niveau >= 2 ? "2e herinnering" : "1e herinnering")}, " +
+        $"{Herinnering.BetalingstermijnDagen} dagen";
+
+    public override string ToString() => Omschrijving;
+}
+
 public partial class FactuurBewerkenViewModel : PaginaViewModel
 {
     private readonly DialoogService _dialogen;
@@ -207,7 +216,9 @@ public partial class FactuurBewerkenViewModel : PaginaViewModel
 
         if (_factuurId is { } id)
         {
-            Factuur = await Db.Facturen.Include(f => f.Regels).Include(f => f.Klant).SingleAsync(f => f.Id == id);
+            Factuur = await Db.Facturen.Include(f => f.Regels).Include(f => f.Klant).Include(f => f.Herinneringen)
+                .SingleAsync(f => f.Id == id);
+            _gecrediteerd = await new FactuurService(Db).GecrediteerdAsync(id);
             if (Factuur.OrigineleFactuurId is { } origineelId)
             {
                 var origineel = await Db.Facturen.AsNoTracking().SingleAsync(f => f.Id == origineelId);
@@ -235,9 +246,152 @@ public partial class FactuurBewerkenViewModel : PaginaViewModel
         Regels.Clear();
         foreach (var regel in Factuur.Regels.OrderBy(r => r.Volgorde))
             Regels.Add(new FactuurregelItem(regel, Herbereken));
+        VerversHerinneringen();
 
         Herbereken();
         OnPropertyChanged(string.Empty);
+    }
+
+    // ---------- Betaling en herinneringen ----------
+
+    private decimal _gecrediteerd;
+
+    public ObservableCollection<HerinneringItem> Herinneringen { get; } = [];
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(HerinneringOpenenCommand), nameof(HerinneringEmailenCommand))]
+    public partial HerinneringItem? GeselecteerdeHerinnering { get; set; }
+
+    [ObservableProperty]
+    public partial DateTime? BetaaldOpInvoer { get; set; } = DateTime.Today;
+
+    [ObservableProperty]
+    public partial int HerinneringTermijn { get; set; } = 7;
+
+    private BetaalStatus Betaalstatus => Factuur.BetaalStatusOp(DateOnly.FromDateTime(DateTime.Today), _gecrediteerd);
+
+    public bool ToonBetaling => IsDefinitief && !IsCredit;
+    public bool ToonOpmerking => IsConcept || Factuur.Opmerking.Trim().Length > 0;
+    public bool IsBetaald => Betaalstatus == BetaalStatus.Betaald;
+    public bool KanBetaaldMarkeren => Betaalstatus is BetaalStatus.Openstaand or BetaalStatus.Vervallen;
+    public bool KanHerinneren => KanBetaaldMarkeren;
+
+    public string BetaalstatusTekst => Betaalstatus switch
+    {
+        BetaalStatus.Betaald => $"Betaald op {Factuur.BetaaldOp:d-M-yyyy}.",
+        BetaalStatus.Gecrediteerd => "Volledig gecrediteerd; er staat niets meer open.",
+        BetaalStatus.Vervallen => $"Vervallen sinds {Factuur.Vervaldatum:d-M-yyyy}. Openstaand: {Openstaand:C}.",
+        BetaalStatus.Openstaand => $"Openstaand: {Openstaand:C}, te betalen vóór {Factuur.Vervaldatum:d-M-yyyy}.",
+        _ => "",
+    };
+
+    private decimal Openstaand => Factuur.OpenstaandBedrag(_gecrediteerd);
+
+    private void VerversHerinneringen()
+    {
+        Herinneringen.Clear();
+        foreach (var h in Factuur.Herinneringen.OrderBy(h => h.Datum).ThenBy(h => h.Id))
+            Herinneringen.Add(new HerinneringItem(h));
+        GeselecteerdeHerinnering = Herinneringen.LastOrDefault();
+    }
+
+    private void VerversBetaling()
+    {
+        foreach (var naam in new[] { nameof(IsBetaald), nameof(KanBetaaldMarkeren), nameof(KanHerinneren), nameof(BetaalstatusTekst) })
+            OnPropertyChanged(naam);
+    }
+
+    [RelayCommand]
+    private Task MarkeerBetaaldAsync() => VoerUitAsync(async () =>
+    {
+        if (BetaaldOpInvoer is not { } datum)
+        {
+            ToonFouten(["Vul de betaaldatum in."]);
+            return;
+        }
+        await new FactuurService(Db).ZetBetaaldAsync(Factuur.Id, DateOnly.FromDateTime(datum));
+        VerversBetaling();
+        ToonSucces($"Factuur {Factuur.Factuurnummer} is gemarkeerd als betaald.");
+    });
+
+    [RelayCommand]
+    private Task BetalingOngedaanAsync() => VoerUitAsync(async () =>
+    {
+        if (!_dialogen.Bevestig("Wilt u de betaling van deze factuur ongedaan maken?"))
+            return;
+        await new FactuurService(Db).ZetBetaaldAsync(Factuur.Id, null);
+        VerversBetaling();
+        ToonSucces("De betaling is ongedaan gemaakt.");
+    });
+
+    [RelayCommand]
+    private Task MaakHerinneringAsync() => VoerUitAsync(async () =>
+    {
+        var vandaag = DateOnly.FromDateTime(DateTime.Today);
+        var niveau = Math.Min(2, Factuur.Herinneringen.Count + 1);
+        var soort = niveau == 1 ? "een betalingsherinnering" : "een tweede herinnering";
+        var vraag = Betaalstatus == BetaalStatus.Openstaand
+            ? $"De vervaldatum ({Factuur.Vervaldatum:d-M-yyyy}) is nog niet verstreken. Wilt u toch {soort} maken?"
+            : $"Wilt u {soort} maken met een betalingstermijn van {HerinneringTermijn} dagen?";
+        if (!_dialogen.Bevestig(vraag, "Herinnering"))
+            return;
+
+        var herinnering = await new FactuurService(Db).MaakHerinneringAsync(Factuur.Id, vandaag, HerinneringTermijn);
+        var pad = await _documenten.ZorgVoorHerinneringPdfAsync(Db, Factuur, herinnering, Openstaand);
+        VerversHerinneringen();
+        FactuurDocumenten.Open(pad);
+        ToonSucces($"De herinnering is opgeslagen als {pad}");
+    });
+
+    private bool IsHerinneringGeselecteerd() => GeselecteerdeHerinnering is not null;
+
+    [RelayCommand(CanExecute = nameof(IsHerinneringGeselecteerd))]
+    private Task HerinneringOpenenAsync() => VoerUitAsync(async () =>
+    {
+        FactuurDocumenten.Open(await _documenten.ZorgVoorHerinneringPdfAsync(Db, Factuur, GeselecteerdeHerinnering!.Herinnering, Openstaand));
+    });
+
+    [RelayCommand(CanExecute = nameof(IsHerinneringGeselecteerd))]
+    private Task HerinneringEmailenAsync() => VoerUitAsync(async () =>
+    {
+        var herinnering = GeselecteerdeHerinnering!.Herinnering;
+        var herinneringPdf = await _documenten.ZorgVoorHerinneringPdfAsync(Db, Factuur, herinnering, Openstaand);
+        var factuurPdf = await _documenten.ZorgVoorPdfAsync(Db, Factuur);
+
+        var teksten = await Db.Tekstsjablonen.Where(t => t.Taal == Factuur.Taal).ToDictionaryAsync(t => t.Soort, t => t.Tekst);
+        var waarden = Plaatshouders.VoorFactuur(Factuur, _profiel, herinnering.BetalingstermijnDagen);
+        waarden["TotaalInclBtw"] = Openstaand.ToString("C");
+        var onderwerp = Plaatshouders.Vul(teksten.GetValueOrDefault(TekstSoort.HerinneringEmailOnderwerp, ""), waarden);
+        var tekst = Plaatshouders.Vul(teksten.GetValueOrDefault(TekstSoort.HerinneringEmailTekst, ""), waarden);
+
+        await MailAsync(Factuur.KlantGegevens.Email, onderwerp, tekst, herinneringPdf, factuurPdf);
+    });
+
+    [RelayCommand]
+    private Task KopieAsync() => VoerUitAsync(async () =>
+    {
+        if (HeeftWijzigingen && !await BewaarConceptAsync())
+            return;
+        var kopie = await new FactuurService(Db).MaakKopieAsync(Factuur.Id, DateOnly.FromDateTime(DateTime.Today),
+            _profiel.StandaardBetalingstermijnDagen);
+        await _navigatie.OpenAsync<FactuurBewerkenViewModel>(p => p.Initialiseer(kopie.Id));
+    });
+
+    private async Task MailAsync(string aan, string onderwerp, string tekst, params IReadOnlyList<string> bijlagen)
+    {
+        switch (await _mailer.NieuwBerichtAsync(aan, onderwerp, tekst, bijlagen))
+        {
+            case MailResultaat.Geopend:
+                ToonSucces("Het bericht is geopend in uw mailprogramma.");
+                break;
+            case MailResultaat.Geannuleerd:
+                ToonSucces("Het bericht is niet verstuurd.");
+                break;
+            case MailResultaat.ZonderBijlage:
+                _dialogen.Informeer("Uw mailprogramma kon de bijlage(n) niet automatisch toevoegen. Er is een nieuw bericht " +
+                                    "geopend en de PDF is geselecteerd in Verkenner: sleep het bestand naar het bericht.");
+                break;
+        }
     }
 
     private async Task LaadKlantenAsync()
@@ -486,21 +640,7 @@ public partial class FactuurBewerkenViewModel : PaginaViewModel
         var waarden = Plaatshouders.VoorFactuur(Factuur, _profiel);
         var onderwerp = Plaatshouders.Vul(teksten.GetValueOrDefault(TekstSoort.EmailOnderwerp, ""), waarden);
         var tekst = Plaatshouders.Vul(teksten.GetValueOrDefault(TekstSoort.EmailTekst, ""), waarden);
-        var aan = Factuur.KlantGegevens.Email;
-
-        switch (await _mailer.NieuwBerichtAsync(aan, onderwerp, tekst, pad))
-        {
-            case MailResultaat.Geopend:
-                ToonSucces("Het bericht is geopend in uw mailprogramma.");
-                break;
-            case MailResultaat.Geannuleerd:
-                ToonSucces("Het bericht is niet verstuurd.");
-                break;
-            case MailResultaat.ZonderBijlage:
-                _dialogen.Informeer("Uw mailprogramma kon de PDF niet automatisch toevoegen. Er is een nieuw bericht " +
-                                    "geopend en de PDF is geselecteerd in Verkenner: sleep het bestand naar het bericht.");
-                break;
-        }
+        await MailAsync(Factuur.KlantGegevens.Email, onderwerp, tekst, pad);
     });
 
     private async Task VoerUitAsync(Func<Task> actie)
