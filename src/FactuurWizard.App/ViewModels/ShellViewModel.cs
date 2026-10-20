@@ -13,6 +13,7 @@ public partial class ShellViewModel(IServiceProvider services, DialoogService di
 
     public IReadOnlyList<NavigatieItem> Items { get; } =
     [
+        new("Administratie", "Klanten", typeof(KlantenViewModel)),
         new("Inrichting", "Bedrijfsgegevens", typeof(BedrijfsgegevensViewModel)),
         new("Inrichting", "Btw-tarieven", typeof(BtwTarievenViewModel)),
         new("Inrichting", "Producten en diensten", typeof(ArtikelenViewModel)),

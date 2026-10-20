@@ -39,6 +39,7 @@ public partial class App : Application
                 services.AddSingleton<DialoogService>();
 
                 services.AddSingleton<ShellViewModel>();
+                services.AddTransient<KlantenViewModel>();
                 services.AddTransient<BedrijfsgegevensViewModel>();
                 services.AddTransient<BtwTarievenViewModel>();
                 services.AddTransient<ArtikelenViewModel>();
