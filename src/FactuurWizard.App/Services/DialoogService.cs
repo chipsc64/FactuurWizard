@@ -1,4 +1,6 @@
 using System.Windows;
+using FactuurWizard.App.Views;
+using FactuurWizard.Core.Model;
 using Microsoft.Win32;
 
 namespace FactuurWizard.App.Services;
@@ -24,6 +26,10 @@ public class DialoogService
     public void Informeer(string tekst, string titel = "FactuurWizard") =>
         MessageBox.Show(Application.Current.MainWindow, tekst, titel, MessageBoxButton.OK,
             MessageBoxImage.Information);
+
+    /// <summary>Toont het invoervenster voor een nieuwe klant; true als de gebruiker de klant toevoegt.</summary>
+    public bool NieuweKlant(Klant klant) =>
+        new NieuweKlantVenster(klant) { Owner = Application.Current.MainWindow }.ShowDialog() == true;
 
     public void ToonFout(string tekst, string titel = "FactuurWizard") =>
         MessageBox.Show(Application.Current.MainWindow, tekst, titel, MessageBoxButton.OK, MessageBoxImage.Error);

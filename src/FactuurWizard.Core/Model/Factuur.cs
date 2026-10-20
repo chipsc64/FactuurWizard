@@ -73,7 +73,7 @@ public class PartijGegevens
     public static PartijGegevens Van(Klant klant) => new()
     {
         Naam = klant.Naam,
-        Contactpersoon = klant.Contactpersoon,
+        Contactpersoon = klant.Soort == KlantSoort.Bedrijf ? klant.Contactpersoon : "",
         Adres = klant.EffectiefFactuuradres.Kopie(),
         KvkNummer = klant.Soort == KlantSoort.Bedrijf ? klant.KvkNummer : "",
         BtwNummer = klant.Soort == KlantSoort.Bedrijf ? klant.BtwNummer : "",

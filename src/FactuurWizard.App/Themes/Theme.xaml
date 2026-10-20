@@ -55,19 +55,10 @@
 
     <Style TargetType="DatePicker">
         <Setter Property="Margin" Value="0,0,0,10" />
-    </Style>
-
-    <!-- Datumveld zonder de Engelse watermerktekst "Select a date". -->
-    <Style TargetType="DatePickerTextBox">
-        <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="DatePickerTextBox">
-                    <ScrollViewer x:Name="PART_ContentHost" Margin="2,0" VerticalAlignment="Center"
-                                  HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
+        <Style.Resources>
+            <!-- Het kalenderknopje niet de algemene knopstijl (MinWidth, Padding) laten erven. -->
+            <Style TargetType="Button" />
+        </Style.Resources>
     </Style>
 
     <Style TargetType="CheckBox">

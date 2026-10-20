@@ -1,6 +1,8 @@
 ﻿using System.Globalization;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Markup;
 using FactuurWizard.App.Services;
 using FactuurWizard.App.ViewModels;
@@ -35,10 +37,12 @@ public partial class App : Application
             {
                 services.AddSingleton(opslag);
                 services.AddDbContextFactory<FactuurWizardDbContext>(o => o.UseSqlite(opslag.ConnectionString));
-                services.AddTransient<FactuurService>();
                 services.AddSingleton<DialoogService>();
+                services.AddSingleton<Navigatie>();
 
                 services.AddSingleton<ShellViewModel>();
+                services.AddTransient<FacturenViewModel>();
+                services.AddTransient<FactuurBewerkenViewModel>();
                 services.AddTransient<KlantenViewModel>();
                 services.AddTransient<BedrijfsgegevensViewModel>();
                 services.AddTransient<BtwTarievenViewModel>();
@@ -77,8 +81,20 @@ public partial class App : Application
         CultureInfo.DefaultThreadCurrentUICulture = nl;
         Thread.CurrentThread.CurrentCulture = nl;
         Thread.CurrentThread.CurrentUICulture = nl;
-        FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement),
-            new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(nl.IetfLanguageTag)));
+        var taal = XmlLanguage.GetLanguage(nl.IetfLanguageTag);
+        FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement), new FrameworkPropertyMetadata(taal));
+        // Ook voor tekstonderdelen als <Run>, anders gebruiken die de Engelse notatie ($1.00).
+        FrameworkContentElement.LanguageProperty.OverrideMetadata(typeof(System.Windows.Documents.TextElement),
+            new FrameworkPropertyMetadata(taal));
+
+        // Datumvelden zonder de Engelse watermerktekst "Select a date".
+        EventManager.RegisterClassHandler(typeof(DatePicker), FrameworkElement.LoadedEvent, new RoutedEventHandler((s, _) =>
+        {
+            if (s is DatePicker dp &&
+                dp.Template.FindName("PART_TextBox", dp) is DatePickerTextBox tekstvak &&
+                tekstvak.Template.FindName("PART_Watermark", tekstvak) is ContentControl watermerk)
+                watermerk.Content = "";
+        }));
     }
 
     protected override void OnExit(ExitEventArgs e)

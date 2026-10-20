@@ -7,12 +7,22 @@ namespace FactuurWizard.App.ViewModels;
 
 public sealed record NavigatieItem(string Groep, string Titel, Type PaginaType);
 
-public partial class ShellViewModel(IServiceProvider services, DialoogService dialogen) : ObservableObject
+public partial class ShellViewModel : ObservableObject
 {
-    private bool _terugzetten;
+    private readonly IServiceProvider _services;
+    private readonly DialoogService _dialogen;
+    private bool _selectieOnderdrukken;
+
+    public ShellViewModel(IServiceProvider services, DialoogService dialogen, Navigatie navigatie)
+    {
+        _services = services;
+        _dialogen = dialogen;
+        navigatie.Shell = this;
+    }
 
     public IReadOnlyList<NavigatieItem> Items { get; } =
     [
+        new("Administratie", "Facturen", typeof(FacturenViewModel)),
         new("Administratie", "Klanten", typeof(KlantenViewModel)),
         new("Inrichting", "Bedrijfsgegevens", typeof(BedrijfsgegevensViewModel)),
         new("Inrichting", "Btw-tarieven", typeof(BtwTarievenViewModel)),
@@ -30,32 +40,50 @@ public partial class ShellViewModel(IServiceProvider services, DialoogService di
     /// <summary>Vraagt bevestiging als de huidige pagina niet-opgeslagen wijzigingen heeft.</summary>
     public bool MagPaginaVerlaten() =>
         HuidigePagina is not { HeeftWijzigingen: true } ||
-        dialogen.Bevestig("Er zijn niet-opgeslagen wijzigingen. Wilt u deze pagina verlaten zonder op te slaan?");
+        _dialogen.Bevestig("Er zijn niet-opgeslagen wijzigingen. Wilt u deze pagina verlaten zonder op te slaan?");
 
     partial void OnGeselecteerdItemChanged(NavigatieItem? oldValue, NavigatieItem? newValue)
     {
-        if (_terugzetten || newValue is null)
+        if (_selectieOnderdrukken || newValue is null)
             return;
 
         if (!MagPaginaVerlaten())
         {
             // Selectie in de lijst terugzetten nadat de ListBox klaar is met de huidige wijziging.
-            Dispatcher.CurrentDispatcher.BeginInvoke(() =>
-            {
-                _terugzetten = true;
-                GeselecteerdItem = oldValue;
-                _terugzetten = false;
-            });
+            Dispatcher.CurrentDispatcher.BeginInvoke(() => ZetSelectie(oldValue));
             return;
         }
 
-        _ = OpenAsync(newValue);
+        _ = ToonAsync((PaginaViewModel)_services.GetRequiredService(newValue.PaginaType));
     }
 
-    private async Task OpenAsync(NavigatieItem item)
+    /// <summary>
+    /// Opent een pagina vanuit code. Het menu-item van dat paginatype wordt geselecteerd, of geen
+    /// als de pagina niet in het menu staat.
+    /// </summary>
+    public async Task<bool> OpenPaginaAsync(PaginaViewModel pagina)
+    {
+        if (!MagPaginaVerlaten())
+        {
+            pagina.Dispose();
+            return false;
+        }
+
+        ZetSelectie(Items.FirstOrDefault(i => i.PaginaType == pagina.GetType()));
+        await ToonAsync(pagina);
+        return true;
+    }
+
+    private void ZetSelectie(NavigatieItem? item)
+    {
+        _selectieOnderdrukken = true;
+        GeselecteerdItem = item;
+        _selectieOnderdrukken = false;
+    }
+
+    private async Task ToonAsync(PaginaViewModel pagina)
     {
         HuidigePagina?.Dispose();
-        var pagina = (PaginaViewModel)services.GetRequiredService(item.PaginaType);
         HuidigePagina = pagina;
         try
         {
@@ -64,7 +92,7 @@ public partial class ShellViewModel(IServiceProvider services, DialoogService di
         catch (Exception ex)
         {
             Foutlog.Schrijf(ex);
-            dialogen.ToonFout($"De pagina '{item.Titel}' kon niet worden geladen.\n\n{ex.Message}");
+            _dialogen.ToonFout($"De pagina '{pagina.Titel}' kon niet worden geladen.\n\n{ex.Message}");
         }
     }
 }
