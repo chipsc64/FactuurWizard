@@ -99,8 +99,8 @@ public class FactuurService(FactuurWizardDbContext db)
             Taal = origineel.Taal,
             Valuta = origineel.Valuta,
             BriefpapierId = origineel.BriefpapierId,
+            // De verwijzing naar de originele factuur staat al standaard op de creditfactuur.
             OrigineleFactuurId = origineel.Id,
-            Opmerking = $"Creditering van factuur {origineel.Factuurnummer}.",
             Regels = origineel.Regels.OrderBy(r => r.Volgorde).Select(r => new Factuurregel
             {
                 Volgorde = r.Volgorde,

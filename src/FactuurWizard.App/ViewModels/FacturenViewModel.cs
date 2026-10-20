@@ -16,10 +16,14 @@ public sealed record FactuurRij(
 public partial class FacturenViewModel : PaginaViewModel
 {
     private readonly Navigatie _navigatie;
+    private readonly FactuurDocumenten _documenten;
 
-    public FacturenViewModel(IDbContextFactory<FactuurWizardDbContext> dbFactory, Navigatie navigatie) : base(dbFactory)
+    public FacturenViewModel(
+        IDbContextFactory<FactuurWizardDbContext> dbFactory, Navigatie navigatie, FactuurDocumenten documenten)
+        : base(dbFactory)
     {
         _navigatie = navigatie;
+        _documenten = documenten;
         FacturenView = CollectionViewSource.GetDefaultView(Facturen);
         FacturenView.Filter = o => o is FactuurRij r && PastBijFilter(r);
         // Concepten bovenaan, daarna de nieuwste factuur eerst.
@@ -32,7 +36,7 @@ public partial class FacturenViewModel : PaginaViewModel
     public ICollectionView FacturenView { get; }
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(OpenenCommand))]
+    [NotifyCanExecuteChangedFor(nameof(OpenenCommand), nameof(PdfOpenenCommand))]
     public partial FactuurRij? Geselecteerd { get; set; }
 
     [ObservableProperty]
@@ -77,4 +81,23 @@ public partial class FacturenViewModel : PaginaViewModel
         Geselecteerd is { } rij ? _navigatie.OpenAsync<FactuurBewerkenViewModel>(p => p.Initialiseer(rij.Id)) : Task.CompletedTask;
 
     private bool IsGeselecteerd() => Geselecteerd is not null;
+
+    [RelayCommand(CanExecute = nameof(IsDefinitiefGeselecteerd))]
+    private async Task PdfOpenenAsync()
+    {
+        if (Geselecteerd is not { } rij)
+            return;
+        try
+        {
+            var factuur = await Db.Facturen.Include(f => f.Regels).Include(f => f.Klant).SingleAsync(f => f.Id == rij.Id);
+            FactuurDocumenten.Open(await _documenten.ZorgVoorPdfAsync(Db, factuur));
+        }
+        catch (Exception ex)
+        {
+            Foutlog.Schrijf(ex);
+            ToonFouten([$"De PDF kon niet worden geopend: {ex.Message}"]);
+        }
+    }
+
+    private bool IsDefinitiefGeselecteerd() => Geselecteerd is { Status: "Definitief" };
 }

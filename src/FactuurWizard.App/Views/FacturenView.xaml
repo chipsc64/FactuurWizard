@@ -11,6 +11,7 @@
             <StackPanel Orientation="Horizontal">
                 <Button Content="Nieuwe factuur" Style="{StaticResource PrimaireKnop}" Command="{Binding NieuweFactuurCommand}" />
                 <Button Content="Openen" Command="{Binding OpenenCommand}" />
+                <Button Content="PDF openen" Command="{Binding PdfOpenenCommand}" />
             </StackPanel>
             <TextBlock Text="{Binding Melding}" Style="{StaticResource Melding}" />
         </StackPanel>

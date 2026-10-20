@@ -27,8 +27,13 @@
                 <Button Content="Terug naar overzicht" Command="{Binding TerugCommand}" />
                 <StackPanel Orientation="Horizontal" Visibility="{Binding IsConcept, Converter={StaticResource Zichtbaar}}">
                     <Button Content="Opslaan" Command="{Binding OpslaanCommand}" />
+                    <Button Content="Voorbeeld (PDF)" Command="{Binding VoorbeeldCommand}" />
                     <Button Content="Definitief maken" Style="{StaticResource PrimaireKnop}" Command="{Binding MaakDefinitiefCommand}" />
                     <Button Content="Concept verwijderen" Command="{Binding VerwijderConceptCommand}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Visibility="{Binding IsDefinitief, Converter={StaticResource Zichtbaar}}">
+                    <Button Content="PDF openen" Style="{StaticResource PrimaireKnop}" Command="{Binding PdfOpenenCommand}" />
+                    <Button Content="E-mailen" Command="{Binding EmailenCommand}" />
                 </StackPanel>
                 <Button Content="Creditfactuur maken" Command="{Binding MaakCreditfactuurCommand}"
                         Visibility="{Binding KanCrediteren, Converter={StaticResource Zichtbaar}}" />

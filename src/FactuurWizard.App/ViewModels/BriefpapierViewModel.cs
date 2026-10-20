@@ -6,13 +6,15 @@ using FactuurWizard.App.Services;
 using FactuurWizard.Core.Model;
 using FactuurWizard.Core.Services;
 using FactuurWizard.Data;
+using FactuurWizard.Pdf;
 using Microsoft.EntityFrameworkCore;
 
 namespace FactuurWizard.App.ViewModels;
 
 public partial class BriefpapierViewModel(
     IDbContextFactory<FactuurWizardDbContext> dbFactory,
-    DialoogService dialogen) : PaginaViewModel(dbFactory)
+    DialoogService dialogen,
+    FactuurDocumenten documenten) : PaginaViewModel(dbFactory)
 {
     private const int MaxBestandsgrootte = 10 * 1024 * 1024;
     private const string AfbeeldingFilter = "Afbeeldingen (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg";
@@ -27,8 +29,8 @@ public partial class BriefpapierViewModel(
 
     public string AchtergrondOmschrijving => Sjabloon?.AchtergrondSoort switch
     {
-        AchtergrondSoort.Afbeelding => $"Afbeelding ({Sjabloon.Achtergrond!.Length / 1024} kB)",
-        AchtergrondSoort.Pdf => $"PDF-document ({Sjabloon.Achtergrond!.Length / 1024} kB) – eerste pagina wordt gebruikt",
+        AchtergrondSoort.Afbeelding => $"Briefpapier ingesteld ({Sjabloon.Achtergrond!.Length / 1024} kB). " +
+                                       "Bij een PDF wordt de eerste pagina gebruikt.",
         _ => "Geen achtergrond",
     };
 
@@ -75,7 +77,7 @@ public partial class BriefpapierViewModel(
     }
 
     [RelayCommand]
-    private void KiesAchtergrond()
+    private async Task KiesAchtergrondAsync()
     {
         if (Sjabloon is null)
             return;
@@ -84,8 +86,23 @@ public partial class BriefpapierViewModel(
         if (bytes is null)
             return;
 
+        if (IsPdf(bytes))
+        {
+            // Een PDF wordt eenmalig omgezet naar een afbeelding van 300 dpi; dat is scherp genoeg om af te drukken.
+            try
+            {
+                bytes = await PdfNaarAfbeelding.EerstePaginaAsync(bytes);
+            }
+            catch (Exception ex)
+            {
+                Foutlog.Schrijf(ex);
+                ToonFouten([$"Het PDF-bestand kon niet worden gelezen: {ex.Message}"]);
+                return;
+            }
+        }
+
         Sjabloon.Achtergrond = bytes;
-        Sjabloon.AchtergrondSoort = IsPdf(bytes) ? AchtergrondSoort.Pdf : AchtergrondSoort.Afbeelding;
+        Sjabloon.AchtergrondSoort = AchtergrondSoort.Afbeelding;
         if (Sjabloon.ToonBedrijfsgegevens &&
             dialogen.Bevestig("Staan uw bedrijfsgegevens en logo al op dit briefpapier? Dan worden ze niet " +
                               "nogmaals op de factuur gezet."))
@@ -105,12 +122,36 @@ public partial class BriefpapierViewModel(
         Vernieuw();
     }
 
+    /// <summary>Toont een voorbeeldfactuur met de huidige (ook nog niet opgeslagen) instellingen.</summary>
     [RelayCommand]
-    private async Task OpslaanAsync()
+    private async Task VoorbeeldAsync()
     {
         if (Sjabloon is not { } s)
             return;
+        var fouten = Valideer(s);
+        if (fouten.Count > 0)
+        {
+            ToonFouten(fouten);
+            return;
+        }
 
+        try
+        {
+            var profiel = await Db.Bedrijfsprofielen.AsNoTracking().SingleAsync();
+            var teksten = await Db.Tekstsjablonen.AsNoTracking().Where(t => t.Taal == profiel.Taal)
+                .ToDictionaryAsync(t => t.Soort, t => t.Tekst);
+            var pad = await documenten.MaakTijdelijkePdfAsync(Voorbeeldfactuur.Maak(profiel, s, teksten), "Voorbeeld briefpapier");
+            FactuurDocumenten.Open(pad);
+        }
+        catch (Exception ex)
+        {
+            Foutlog.Schrijf(ex);
+            ToonFouten([$"Het voorbeeld kon niet worden gemaakt: {ex.Message}"]);
+        }
+    }
+
+    private static List<string> Valideer(Briefpapier s)
+    {
         var fouten = new List<string>();
         if (!Validatie.IsGeldigeKleur(s.Accentkleur))
             fouten.Add("De accentkleur moet het formaat #RRGGBB hebben, bijv. #1F4E79.");
@@ -120,7 +161,16 @@ public partial class BriefpapierViewModel(
             fouten.Add("Marges moeten tussen 5 en 100 mm liggen.");
         if (s.LogoBreedteMm is < 10 or > 150)
             fouten.Add("De logobreedte moet tussen 10 en 150 mm liggen.");
+        return fouten;
+    }
 
+    [RelayCommand]
+    private async Task OpslaanAsync()
+    {
+        if (Sjabloon is not { } s)
+            return;
+
+        var fouten = Valideer(s);
         if (fouten.Count > 0)
         {
             ToonFouten(fouten);

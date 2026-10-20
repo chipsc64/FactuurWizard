@@ -20,6 +20,28 @@ public static partial class Plaatshouders
         ("Termijn", "Betalingstermijn in dagen (herinneringen)"),
     ];
 
+    private static readonly System.Globalization.CultureInfo Nl = new("nl-NL");
+
+    /// <summary>Waarden voor een (definitieve of concept)factuur.</summary>
+    public static Dictionary<string, string> VoorFactuur(Model.Factuur factuur, Model.Bedrijfsprofiel profiel, int? termijn = null)
+    {
+        var klant = factuur.Status == Model.FactuurStatus.Definitief ? factuur.KlantGegevens
+            : factuur.Klant is { } k ? Model.PartijGegevens.Van(k) : new Model.PartijGegevens();
+        var nummer = factuur.Factuurnummer ?? "(concept)";
+        return new Dictionary<string, string>
+        {
+            ["Factuurnummer"] = nummer,
+            ["Factuurdatum"] = factuur.Factuurdatum.ToString("d-M-yyyy", Nl),
+            ["Vervaldatum"] = factuur.Vervaldatum.ToString("d-M-yyyy", Nl),
+            ["TotaalInclBtw"] = factuur.TotaalInclBtw.ToString("C", Nl),
+            ["Betaalreferentie"] = nummer,
+            ["Klantnaam"] = klant.Contactpersoon.Length > 0 ? klant.Contactpersoon : klant.Naam,
+            ["Bedrijfsnaam"] = profiel.Bedrijfsnaam,
+            ["Iban"] = factuur.Iban.Length > 0 ? factuur.Iban : profiel.Iban,
+            ["Termijn"] = (termijn ?? factuur.BetalingstermijnDagen).ToString(),
+        };
+    }
+
     public static string Vul(string tekst, IReadOnlyDictionary<string, string> waarden) =>
         PlaatshouderRegex().Replace(tekst, m => waarden.TryGetValue(m.Groups[1].Value, out var w) ? w : m.Value);
 

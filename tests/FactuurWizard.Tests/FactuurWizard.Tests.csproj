@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\FactuurWizard.Core\FactuurWizard.Core.csproj" />
     <ProjectReference Include="..\..\src\FactuurWizard.Data\FactuurWizard.Data.csproj" />
+    <ProjectReference Include="..\..\src\FactuurWizard.Pdf\FactuurWizard.Pdf.csproj" />
   </ItemGroup>
 
 </Project>

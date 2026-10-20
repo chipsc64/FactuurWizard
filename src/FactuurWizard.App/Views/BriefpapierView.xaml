@@ -16,6 +16,7 @@
         <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
             <StackPanel Orientation="Horizontal">
                 <Button Content="Opslaan" Style="{StaticResource PrimaireKnop}" Command="{Binding OpslaanCommand}" />
+                <Button Content="Voorbeeld bekijken" Command="{Binding VoorbeeldCommand}" />
             </StackPanel>
             <TextBlock Text="{Binding Melding}" Style="{StaticResource Melding}" />
         </StackPanel>
@@ -121,7 +122,7 @@
                         <TextBlock Text="Voettekst" Style="{StaticResource Sectiekop}" />
                         <TextBox Text="{Binding Sjabloon.Voettekst}" Style="{StaticResource MeerregeligeTekst}" />
                         <TextBlock Style="{StaticResource Hulptekst}"
-                                   Text="Een voorbeeld van de factuur met dit briefpapier volgt zodra de PDF-functie klaar is." />
+                                   Text="Met 'Voorbeeld bekijken' ziet u een voorbeeldfactuur met deze instellingen, ook vóór het opslaan." />
                     </StackPanel>
                 </Grid>
             </Border>

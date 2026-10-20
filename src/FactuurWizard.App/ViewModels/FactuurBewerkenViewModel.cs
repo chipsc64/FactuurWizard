@@ -16,6 +16,8 @@ public partial class FactuurBewerkenViewModel : PaginaViewModel
 {
     private readonly DialoogService _dialogen;
     private readonly Navigatie _navigatie;
+    private readonly FactuurDocumenten _documenten;
+    private readonly Mailer _mailer;
 
     private int? _factuurId;
     private Bedrijfsprofiel _profiel = new();
@@ -29,12 +31,21 @@ public partial class FactuurBewerkenViewModel : PaginaViewModel
     private string? _origineelNummer;
 
     public FactuurBewerkenViewModel(
-        IDbContextFactory<FactuurWizardDbContext> dbFactory, DialoogService dialogen, Navigatie navigatie)
+        IDbContextFactory<FactuurWizardDbContext> dbFactory, DialoogService dialogen, Navigatie navigatie,
+        FactuurDocumenten documenten, Mailer mailer)
         : base(dbFactory)
     {
         _dialogen = dialogen;
         _navigatie = navigatie;
+        _documenten = documenten;
+        _mailer = mailer;
     }
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(VoorbeeldCommand), nameof(PdfOpenenCommand), nameof(EmailenCommand))]
+    public partial bool IsBezig { get; set; }
+
+    private bool IsNietBezig() => !IsBezig;
 
     /// <summary>Kies de te openen factuur; null maakt een nieuwe conceptfactuur.</summary>
     public void Initialiseer(int? factuurId) => _factuurId = factuurId;
@@ -425,7 +436,89 @@ public partial class FactuurBewerkenViewModel : PaginaViewModel
         Herbereken();
         GeselecteerdeRegel = null;
         OnPropertyChanged(string.Empty);
-        ToonSucces($"{(IsCredit ? "Creditfactuur" : "Factuur")} {Factuur.Factuurnummer} is definitief gemaakt.");
+
+        var soort = IsCredit ? "Creditfactuur" : "Factuur";
+        try
+        {
+            IsBezig = true;
+            var pad = await _documenten.ZorgVoorPdfAsync(Db, Factuur);
+            ToonSucces($"{soort} {Factuur.Factuurnummer} is definitief gemaakt. De PDF is opgeslagen als {pad}");
+        }
+        catch (Exception ex)
+        {
+            Foutlog.Schrijf(ex);
+            ToonFouten([$"{soort} {Factuur.Factuurnummer} is definitief gemaakt, maar de PDF kon niet worden gemaakt: " +
+                        $"{ex.Message} Probeer het opnieuw met 'PDF openen'."]);
+        }
+        finally
+        {
+            IsBezig = false;
+        }
+    }
+
+    /// <summary>Toont een concept als PDF met het watermerk "CONCEPT", zonder iets op te slaan.</summary>
+    [RelayCommand(CanExecute = nameof(IsNietBezig))]
+    private async Task VoorbeeldAsync()
+    {
+        if (GekozenKlant is null)
+        {
+            ToonFouten(["Kies eerst een klant."]);
+            return;
+        }
+        await VoerUitAsync(async () =>
+        {
+            var invoer = await _documenten.MaakInvoerAsync(Db, Factuur);
+            FactuurDocumenten.Open(await _documenten.MaakTijdelijkePdfAsync(invoer, "Concept " + KlantNaam));
+        });
+    }
+
+    [RelayCommand(CanExecute = nameof(IsNietBezig))]
+    private Task PdfOpenenAsync() => VoerUitAsync(async () =>
+    {
+        FactuurDocumenten.Open(await _documenten.ZorgVoorPdfAsync(Db, Factuur));
+    });
+
+    [RelayCommand(CanExecute = nameof(IsNietBezig))]
+    private Task EmailenAsync() => VoerUitAsync(async () =>
+    {
+        var pad = await _documenten.ZorgVoorPdfAsync(Db, Factuur);
+        var teksten = await Db.Tekstsjablonen.Where(t => t.Taal == Factuur.Taal).ToDictionaryAsync(t => t.Soort, t => t.Tekst);
+        var waarden = Plaatshouders.VoorFactuur(Factuur, _profiel);
+        var onderwerp = Plaatshouders.Vul(teksten.GetValueOrDefault(TekstSoort.EmailOnderwerp, ""), waarden);
+        var tekst = Plaatshouders.Vul(teksten.GetValueOrDefault(TekstSoort.EmailTekst, ""), waarden);
+        var aan = Factuur.KlantGegevens.Email;
+
+        switch (await _mailer.NieuwBerichtAsync(aan, onderwerp, tekst, pad))
+        {
+            case MailResultaat.Geopend:
+                ToonSucces("Het bericht is geopend in uw mailprogramma.");
+                break;
+            case MailResultaat.Geannuleerd:
+                ToonSucces("Het bericht is niet verstuurd.");
+                break;
+            case MailResultaat.ZonderBijlage:
+                _dialogen.Informeer("Uw mailprogramma kon de PDF niet automatisch toevoegen. Er is een nieuw bericht " +
+                                    "geopend en de PDF is geselecteerd in Verkenner: sleep het bestand naar het bericht.");
+                break;
+        }
+    });
+
+    private async Task VoerUitAsync(Func<Task> actie)
+    {
+        try
+        {
+            IsBezig = true;
+            await actie();
+        }
+        catch (Exception ex)
+        {
+            Foutlog.Schrijf(ex);
+            ToonFouten([$"Dit is niet gelukt: {ex.Message}"]);
+        }
+        finally
+        {
+            IsBezig = false;
+        }
     }
 
     [RelayCommand]

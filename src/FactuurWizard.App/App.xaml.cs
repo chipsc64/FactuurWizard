@@ -39,6 +39,8 @@ public partial class App : Application
                 services.AddDbContextFactory<FactuurWizardDbContext>(o => o.UseSqlite(opslag.ConnectionString));
                 services.AddSingleton<DialoogService>();
                 services.AddSingleton<Navigatie>();
+                services.AddSingleton<FactuurDocumenten>();
+                services.AddSingleton<Mailer>();
 
                 services.AddSingleton<ShellViewModel>();
                 services.AddTransient<FacturenViewModel>();
