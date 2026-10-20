@@ -1,0 +1,10 @@
+﻿<Window x:Class="FactuurWizard.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="FactuurWizard" Height="600" Width="1000"
+        WindowStartupLocation="CenterScreen">
+    <StackPanel Margin="24">
+        <TextBlock Text="FactuurWizard" FontSize="24" FontWeight="SemiBold" />
+        <TextBlock x:Name="DataMapTekst" Margin="0,12,0,0" />
+    </StackPanel>
+</Window>
