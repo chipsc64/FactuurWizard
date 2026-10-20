@@ -31,6 +31,10 @@ public class Opslaglocatie
 
     public static Opslaglocatie Laad()
     {
+        // Voor tests en ontwikkeling: een afwijkende map via de omgeving, zonder de instelling te wijzigen.
+        if (Environment.GetEnvironmentVariable("FACTUURWIZARD_DATAMAP") is { Length: > 0 } overschreven)
+            return new Opslaglocatie(overschreven);
+
         try
         {
             if (File.Exists(InstellingenBestand))
@@ -45,6 +49,29 @@ public class Opslaglocatie
             // Beschadigd instellingenbestand: val terug op de standaardlocatie.
         }
         return new Opslaglocatie(StandaardDataMap);
+    }
+
+    public static bool BevatDatabase(string map) => File.Exists(Path.Combine(map, DatabaseBestandsnaam));
+
+    /// <summary>
+    /// Kopieert de database en alle bestanden naar een nieuwe map. De oude map blijft ongewijzigd staan.
+    /// Alle databaseverbindingen moeten gesloten zijn.
+    /// </summary>
+    public void KopieerNaar(string doelMap)
+    {
+        var bron = Path.GetFullPath(DataMap).TrimEnd('\\') + '\\';
+        var doelVolledig = Path.GetFullPath(doelMap).TrimEnd('\\') + '\\';
+        if (doelVolledig.StartsWith(bron, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("De nieuwe map mag niet gelijk zijn aan of binnen de huidige map liggen.");
+
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        Directory.CreateDirectory(doelMap);
+        foreach (var bestand in Directory.GetFiles(DataMap, "*", SearchOption.AllDirectories))
+        {
+            var doel = Path.Combine(doelMap, Path.GetRelativePath(DataMap, bestand));
+            Directory.CreateDirectory(Path.GetDirectoryName(doel)!);
+            File.Copy(bestand, doel, overwrite: false);
+        }
     }
 
     public static void Bewaar(string dataMap)

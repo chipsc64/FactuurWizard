@@ -1,0 +1,130 @@
+<UserControl x:Class="FactuurWizard.App.Views.BriefpapierView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:FactuurWizard.App.ViewModels"
+             xmlns:c="clr-namespace:FactuurWizard.App.Converters"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:BriefpapierViewModel}">
+    <UserControl.Resources>
+        <c:BytesNaarAfbeeldingConverter x:Key="Afbeelding" />
+        <c:KleurNaarBrushConverter x:Key="Kleur" />
+    </UserControl.Resources>
+
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="Opslaan" Style="{StaticResource PrimaireKnop}" Command="{Binding OpslaanCommand}" />
+            </StackPanel>
+            <TextBlock Text="{Binding Melding}" Style="{StaticResource Melding}" />
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <Border Style="{StaticResource Paneel}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel>
+                        <TextBlock Text="Bestaand briefpapier" Style="{StaticResource Sectiekop}" Margin="0,0,0,8" />
+                        <TextBlock Style="{StaticResource Hulptekst}"
+                                   Text="Heeft u al briefpapier (bijvoorbeeld uit Word, opgeslagen als PDF), dan kunt u dat als achtergrond gebruiken. De factuur wordt erop gedrukt." />
+                        <TextBlock Text="{Binding AchtergrondOmschrijving}" Margin="0,0,0,8" />
+                        <Image Source="{Binding Sjabloon.Achtergrond, Converter={StaticResource Afbeelding}}"
+                               MaxHeight="200" HorizontalAlignment="Left" Margin="0,0,0,8" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Button Content="Kiezen…" Command="{Binding KiesAchtergrondCommand}" />
+                            <Button Content="Verwijderen" Command="{Binding VerwijderAchtergrondCommand}" />
+                        </StackPanel>
+                        <CheckBox Content="Bedrijfsgegevens en logo op de factuur afdrukken"
+                                  IsChecked="{Binding Sjabloon.ToonBedrijfsgegevens}" />
+
+                        <TextBlock Text="Logo" Style="{StaticResource Sectiekop}" />
+                        <Border BorderBrush="{StaticResource RandBrush}" BorderThickness="1" Padding="8"
+                                HorizontalAlignment="Left" MinWidth="160" MinHeight="60" Margin="0,0,0,8">
+                            <Image Source="{Binding Sjabloon.Logo, Converter={StaticResource Afbeelding}}" MaxHeight="100" MaxWidth="300" />
+                        </Border>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Button Content="Kiezen…" Command="{Binding KiesLogoCommand}" />
+                            <Button Content="Verwijderen" Command="{Binding VerwijderLogoCommand}" />
+                        </StackPanel>
+                        <TextBlock Text="Breedte logo op de factuur (mm)" Style="{StaticResource Veldlabel}" />
+                        <TextBox Text="{Binding Sjabloon.LogoBreedteMm}" Width="90" HorizontalAlignment="Left" />
+                        <CheckBox Content="Logo en bedrijfsgegevens rechts uitlijnen" IsChecked="{Binding Sjabloon.BedrijfsgegevensRechts}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Opmaak" Style="{StaticResource Sectiekop}" Margin="0,0,0,8" />
+                        <TextBlock Text="Lettertype" Style="{StaticResource Veldlabel}" />
+                        <ComboBox ItemsSource="{Binding Lettertypen}" SelectedItem="{Binding Sjabloon.Lettertype}">
+                            <ComboBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel />
+                                </ItemsPanelTemplate>
+                            </ComboBox.ItemsPanel>
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" FontFamily="{Binding}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Accentkleur" Style="{StaticResource Veldlabel}" />
+                                <DockPanel>
+                                    <Border DockPanel.Dock="Right" Width="26" Margin="6,0,0,10" BorderBrush="{StaticResource RandBrush}"
+                                            BorderThickness="1" Background="{Binding Sjabloon.Accentkleur, Converter={StaticResource Kleur}}" />
+                                    <TextBox Text="{Binding Sjabloon.Accentkleur, UpdateSourceTrigger=PropertyChanged}" />
+                                </DockPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Tekstkleur" Style="{StaticResource Veldlabel}" />
+                                <DockPanel>
+                                    <Border DockPanel.Dock="Right" Width="26" Margin="6,0,0,10" BorderBrush="{StaticResource RandBrush}"
+                                            BorderThickness="1" Background="{Binding Sjabloon.Tekstkleur, Converter={StaticResource Kleur}}" />
+                                    <TextBox Text="{Binding Sjabloon.Tekstkleur, UpdateSourceTrigger=PropertyChanged}" />
+                                </DockPanel>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Marges (mm)" Style="{StaticResource Sectiekop}" />
+                        <TextBlock Style="{StaticResource Hulptekst}"
+                                   Text="Vergroot de marges als uw briefpapier een voorbedrukte kop- of voettekst heeft." />
+                        <UniformGrid Columns="4">
+                            <StackPanel Margin="0,0,8,0">
+                                <TextBlock Text="Boven" Style="{StaticResource Veldlabel}" />
+                                <TextBox Text="{Binding Sjabloon.MargeBovenMm}" />
+                            </StackPanel>
+                            <StackPanel Margin="0,0,8,0">
+                                <TextBlock Text="Onder" Style="{StaticResource Veldlabel}" />
+                                <TextBox Text="{Binding Sjabloon.MargeOnderMm}" />
+                            </StackPanel>
+                            <StackPanel Margin="0,0,8,0">
+                                <TextBlock Text="Links" Style="{StaticResource Veldlabel}" />
+                                <TextBox Text="{Binding Sjabloon.MargeLinksMm}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Rechts" Style="{StaticResource Veldlabel}" />
+                                <TextBox Text="{Binding Sjabloon.MargeRechtsMm}" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <TextBlock Text="Voettekst" Style="{StaticResource Sectiekop}" />
+                        <TextBox Text="{Binding Sjabloon.Voettekst}" Style="{StaticResource MeerregeligeTekst}" />
+                        <TextBlock Style="{StaticResource Hulptekst}"
+                                   Text="Een voorbeeld van de factuur met dit briefpapier volgt zodra de PDF-functie klaar is." />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

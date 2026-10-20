@@ -1,8 +1,21 @@
 ﻿<Application x:Class="FactuurWizard.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:FactuurWizard.App.ViewModels"
+             xmlns:views="clr-namespace:FactuurWizard.App.Views"
              ShutdownMode="OnMainWindowClose">
     <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Theme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
 
+            <!-- Elke pagina-viewmodel wordt automatisch met het bijbehorende scherm getoond. -->
+            <DataTemplate DataType="{x:Type vm:BedrijfsgegevensViewModel}"><views:BedrijfsgegevensView /></DataTemplate>
+            <DataTemplate DataType="{x:Type vm:BtwTarievenViewModel}"><views:BtwTarievenView /></DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ArtikelenViewModel}"><views:ArtikelenView /></DataTemplate>
+            <DataTemplate DataType="{x:Type vm:BriefpapierViewModel}"><views:BriefpapierView /></DataTemplate>
+            <DataTemplate DataType="{x:Type vm:TekstenViewModel}"><views:TekstenView /></DataTemplate>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

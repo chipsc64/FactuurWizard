@@ -1,0 +1,121 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <SolidColorBrush x:Key="AccentBrush" Color="#1F4E79" />
+    <SolidColorBrush x:Key="AccentLichtBrush" Color="#E3ECF5" />
+    <SolidColorBrush x:Key="AchtergrondBrush" Color="#F4F5F7" />
+    <SolidColorBrush x:Key="PaneelBrush" Color="White" />
+    <SolidColorBrush x:Key="RandBrush" Color="#D5D9DE" />
+    <SolidColorBrush x:Key="TekstGedemptBrush" Color="#5F6670" />
+    <SolidColorBrush x:Key="FoutBrush" Color="#B3261E" />
+    <SolidColorBrush x:Key="SuccesBrush" Color="#2E7D32" />
+
+    <Style TargetType="TextBlock" x:Key="Paginakop">
+        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="0,0,0,16" />
+    </Style>
+
+    <Style TargetType="TextBlock" x:Key="Sectiekop">
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+        <Setter Property="Margin" Value="0,16,0,8" />
+    </Style>
+
+    <Style TargetType="TextBlock" x:Key="Veldlabel">
+        <Setter Property="Margin" Value="0,0,0,3" />
+        <Setter Property="Foreground" Value="{StaticResource TekstGedemptBrush}" />
+    </Style>
+
+    <Style TargetType="TextBlock" x:Key="Hulptekst">
+        <Setter Property="Foreground" Value="{StaticResource TekstGedemptBrush}" />
+        <Setter Property="FontStyle" Value="Italic" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Margin" Value="0,0,0,8" />
+    </Style>
+
+    <Style TargetType="TextBox">
+        <Setter Property="Padding" Value="5,4" />
+        <Setter Property="Margin" Value="0,0,0,10" />
+        <Setter Property="BorderBrush" Value="{StaticResource RandBrush}" />
+    </Style>
+
+    <Style TargetType="TextBox" x:Key="MeerregeligeTekst" BasedOn="{StaticResource {x:Type TextBox}}">
+        <Setter Property="AcceptsReturn" Value="True" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="MinHeight" Value="70" />
+    </Style>
+
+    <Style TargetType="ComboBox">
+        <Setter Property="Padding" Value="5,4" />
+        <Setter Property="Margin" Value="0,0,0,10" />
+    </Style>
+
+    <Style TargetType="DatePicker">
+        <Setter Property="Margin" Value="0,0,0,10" />
+    </Style>
+
+    <!-- Datumveld zonder de Engelse watermerktekst "Select a date". -->
+    <Style TargetType="DatePickerTextBox">
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DatePickerTextBox">
+                    <ScrollViewer x:Name="PART_ContentHost" Margin="2,0" VerticalAlignment="Center"
+                                  HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="CheckBox">
+        <Setter Property="Margin" Value="0,2,0,10" />
+    </Style>
+
+    <Style TargetType="Button">
+        <Setter Property="Padding" Value="14,5" />
+        <Setter Property="Margin" Value="0,0,8,0" />
+        <Setter Property="MinWidth" Value="80" />
+    </Style>
+
+    <Style TargetType="Button" x:Key="PrimaireKnop" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style TargetType="Border" x:Key="Paneel">
+        <Setter Property="Background" Value="{StaticResource PaneelBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource RandBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="20" />
+    </Style>
+
+    <Style TargetType="DataGrid">
+        <Setter Property="AutoGenerateColumns" Value="False" />
+        <Setter Property="CanUserAddRows" Value="False" />
+        <Setter Property="CanUserDeleteRows" Value="False" />
+        <Setter Property="HeadersVisibility" Value="Column" />
+        <Setter Property="GridLinesVisibility" Value="Horizontal" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource RandBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource RandBrush}" />
+        <Setter Property="RowHeight" Value="28" />
+        <Setter Property="Margin" Value="0,0,0,10" />
+    </Style>
+
+    <!-- Statusmelding onderaan een pagina (succes of fout). -->
+    <Style TargetType="TextBlock" x:Key="Melding">
+        <Setter Property="Margin" Value="0,12,0,0" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Foreground" Value="{StaticResource SuccesBrush}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding MeldingIsFout}" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource FoutBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+</ResourceDictionary>

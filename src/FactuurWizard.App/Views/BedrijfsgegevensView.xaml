@@ -1,0 +1,150 @@
+<UserControl x:Class="FactuurWizard.App.Views.BedrijfsgegevensView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:FactuurWizard.App.ViewModels"
+             xmlns:c="clr-namespace:FactuurWizard.App.Converters"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:BedrijfsgegevensViewModel}">
+    <UserControl.Resources>
+        <c:DateOnlyConverter x:Key="DateOnly" />
+        <c:NietConverter x:Key="Niet" />
+        <BooleanToVisibilityConverter x:Key="Zichtbaar" />
+    </UserControl.Resources>
+
+    <DockPanel>
+
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="Opslaan" Style="{StaticResource PrimaireKnop}" Command="{Binding OpslaanCommand}" />
+            </StackPanel>
+            <TextBlock Text="{Binding Melding}" Style="{StaticResource Melding}" />
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <Border Style="{StaticResource Paneel}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Linkerkolom -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Bedrijf" Style="{StaticResource Sectiekop}" Margin="0,0,0,8" />
+                        <TextBlock Text="Bedrijfsnaam *" Style="{StaticResource Veldlabel}" />
+                        <TextBox Text="{Binding Profiel.Bedrijfsnaam}" />
+                        <TextBlock Text="KvK-nummer" Style="{StaticResource Veldlabel}" />
+                        <TextBox Text="{Binding Profiel.KvkNummer}" />
+                        <TextBlock Text="Btw-nummer (btw-id)" Style="{StaticResource Veldlabel}" />
+                        <TextBox Text="{Binding Profiel.BtwNummer}" />
+
+                        <TextBlock Text="Adres" Style="{StaticResource Sectiekop}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="90" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Straat" Style="{StaticResource Veldlabel}" />
+                                <TextBox Text="{Binding Profiel.Adres.Straat}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Huisnummer" Style="{StaticResource Veldlabel}" />
+                                <TextBox Text="{Binding Profiel.Adres.Huisnummer}" />
+                            </StackPanel>
+                        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Postcode" Style="{StaticResource Veldlabel}" />
+                                <TextBox Text="{Binding Profiel.Adres.Postcode}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Plaats" Style="{StaticResource Veldlabel}" />
+                                <TextBox Text="{Binding Profiel.Adres.Plaats}" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="Land" Style="{StaticResource Veldlabel}" />
+                        <TextBox Text="{Binding Profiel.Adres.Land}" />
+
+                        <TextBlock Text="Contact" Style="{StaticResource Sectiekop}" />
+                        <TextBlock Text="E-mailadres" Style="{StaticResource Veldlabel}" />
+                        <TextBox Text="{Binding Profiel.Email}" />
+                        <TextBlock Text="Telefoon" Style="{StaticResource Veldlabel}" />
+                        <TextBox Text="{Binding Profiel.Telefoon}" />
+                        <TextBlock Text="Website" Style="{StaticResource Veldlabel}" />
+                        <TextBox Text="{Binding Profiel.Website}" />
+                    </StackPanel>
+
+                    <!-- Rechterkolom -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Betalen" Style="{StaticResource Sectiekop}" Margin="0,0,0,8" />
+                        <TextBlock Text="IBAN" Style="{StaticResource Veldlabel}" />
+                        <TextBox Text="{Binding Profiel.Iban}" />
+                        <TextBlock Text="BIC (optioneel)" Style="{StaticResource Veldlabel}" />
+                        <TextBox Text="{Binding Profiel.Bic}" />
+                        <TextBlock Text="Ten name van (leeg = bedrijfsnaam)" Style="{StaticResource Veldlabel}" />
+                        <TextBox Text="{Binding Profiel.TenaamstellingRekening}" />
+                        <TextBlock Text="Standaard betalingstermijn (dagen)" Style="{StaticResource Veldlabel}" />
+                        <TextBox Text="{Binding Profiel.StandaardBetalingstermijnDagen}" Width="90" HorizontalAlignment="Left" />
+
+                        <TextBlock Text="Factuurnummering" Style="{StaticResource Sectiekop}" />
+                        <TextBlock Style="{StaticResource Hulptekst}"
+                                   Text="Facturen krijgen een nummer als 2026-0001. Het startnummer geldt alleen voor het eerste jaar, bijvoorbeeld om door te tellen vanaf uw facturen in Word. Elk volgend jaar begint weer bij 0001." />
+                        <Grid IsEnabled="{Binding NummeringVergrendeld, Converter={StaticResource Niet}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Jaar" Style="{StaticResource Veldlabel}" />
+                                <TextBox Text="{Binding Profiel.NummeringEersteJaar}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Startnummer" Style="{StaticResource Veldlabel}" />
+                                <TextBox Text="{Binding Profiel.NummeringStartnummer}" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Style="{StaticResource Hulptekst}"
+                                   Text="Er zijn al facturen genummerd; het startnummer kan niet meer gewijzigd worden."
+                                   Visibility="{Binding NummeringVergrendeld, Converter={StaticResource Zichtbaar}}" />
+
+                        <TextBlock Text="Kleineondernemersregeling (KOR)" Style="{StaticResource Sectiekop}" />
+                        <CheckBox Content="Ik maak gebruik van de KOR" IsChecked="{Binding KorActief}" />
+                        <Grid IsEnabled="{Binding KorActief}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Ingangsdatum" Style="{StaticResource Veldlabel}" />
+                                <DatePicker SelectedDate="{Binding Profiel.KorIngangsdatum, Converter={StaticResource DateOnly}}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Einddatum (optioneel)" Style="{StaticResource Veldlabel}" />
+                                <DatePicker SelectedDate="{Binding Profiel.KorEinddatum, Converter={StaticResource DateOnly}}" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Style="{StaticResource Hulptekst}"
+                                   Text="Facturen binnen deze periode worden zonder btw opgemaakt, met de vermelding dat u gebruikmaakt van de kleineondernemersregeling." />
+
+                        <TextBlock Text="Opslaglocatie" Style="{StaticResource Sectiekop}" />
+                        <TextBlock Text="{Binding DataMap}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                        <Button Content="Wijzigen…" HorizontalAlignment="Left" Command="{Binding WijzigOpslaglocatieCommand}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>
