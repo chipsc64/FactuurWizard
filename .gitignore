@@ -490,3 +490,7 @@ Releases/
 
 # Release notes wel bijhouden
 !Docs/releases/
+
+# Planningsdocumenten (alleen lokaal)
+Docs/claude_task.md
+Docs/takenlijst_en_vragen.md
