@@ -52,6 +52,10 @@ git push origin v1.0.1
 
 Lokaal een installatieprogramma maken, zonder te publiceren: `./build/release.ps1 -Versie 1.0.1` (uitvoer in `Releases/`). Release notes kunnen in `Docs/releases/<versie>.md`.
 
+## Licentie
+
+FactuurWizard is vrije software onder de [GNU General Public License versie 3](LICENSE) (of later), met een aanvullende toestemming voor het gebruik van QuestPDF. Zie [NOTICE.md](NOTICE.md).
+
 ## Gebruikte onderdelen
 
 | Onderdeel | Licentie |
