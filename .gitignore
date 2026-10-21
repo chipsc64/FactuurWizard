@@ -487,3 +487,6 @@ design.db*
 # Release-uitvoer (build/release.ps1)
 publish/
 Releases/
+
+# Release notes wel bijhouden
+!Docs/releases/
