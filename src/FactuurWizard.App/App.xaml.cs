@@ -41,6 +41,8 @@ public partial class App : Application
                 services.AddSingleton<Navigatie>();
                 services.AddSingleton<FactuurDocumenten>();
                 services.AddSingleton<Mailer>();
+                services.AddSingleton<Updater>();
+                services.AddTransient<BackupViewModel>();
 
                 services.AddSingleton<ShellViewModel>();
                 services.AddTransient<FacturenViewModel>();
@@ -74,6 +76,9 @@ public partial class App : Application
         var venster = _host.Services.GetRequiredService<MainWindow>();
         MainWindow = venster;
         venster.Show();
+
+        // Op de achtergrond kijken of er een nieuwe versie is; de gebruiker beslist zelf wanneer.
+        _ = _host.Services.GetRequiredService<Updater>().ControleerAsync();
     }
 
     /// <summary>Nederlandse notatie voor bedragen en datums, ook in bindings (komma als decimaalteken).</summary>

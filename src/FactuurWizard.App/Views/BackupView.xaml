@@ -1,0 +1,43 @@
+<UserControl x:Class="FactuurWizard.App.Views.BackupView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:FactuurWizard.App.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:BackupViewModel}">
+    <DockPanel>
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding Melding}" Style="{StaticResource Melding}" />
+
+        <StackPanel MaxWidth="720" HorizontalAlignment="Left">
+            <Border Style="{StaticResource Paneel}" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Backup maken" Style="{StaticResource Sectiekop}" Margin="0,0,0,8" />
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,8"
+                               Text="Een backup bevat al uw gegevens in één zip-bestand: klanten, facturen, instellingen, briefpapier en alle PDF's." />
+                    <TextBlock Style="{StaticResource Hulptekst}"
+                               Text="Bewaar backups bij voorkeur ook buiten deze computer, bijvoorbeeld op een USB-stick of in uw OneDrive-map. Een backup op dezelfde schijf helpt niet als de computer kapotgaat." />
+                    <TextBlock Text="{Binding LaatsteBackup}" Margin="0,0,0,12" />
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Backup maken…" Style="{StaticResource PrimaireKnop}" Command="{Binding MaakBackupCommand}" />
+                        <Button Content="Map met backups openen" Command="{Binding OpenMapCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Paneel}">
+                <StackPanel>
+                    <TextBlock Text="Backup terugzetten" Style="{StaticResource Sectiekop}" Margin="0,0,0,8" />
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,12"
+                               Text="Hiermee vervangt u alle huidige gegevens door die uit een backup, bijvoorbeeld op een nieuwe computer. Van de huidige gegevens wordt eerst automatisch een backup gemaakt." />
+                    <Button Content="Backup terugzetten…" HorizontalAlignment="Left" Command="{Binding TerugzettenCommand}" />
+                </StackPanel>
+            </Border>
+
+            <TextBlock Style="{StaticResource Hulptekst}" Margin="0,16,0,0">
+                <Run Text="Uw gegevens staan in:" />
+                <Run Text="{Binding DataMap, Mode=OneWay}" />
+            </TextBlock>
+        </StackPanel>
+    </DockPanel>
+</UserControl>

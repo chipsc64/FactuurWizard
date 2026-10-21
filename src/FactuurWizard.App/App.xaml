@@ -20,6 +20,7 @@
             <DataTemplate DataType="{x:Type vm:ArtikelenViewModel}"><views:ArtikelenView /></DataTemplate>
             <DataTemplate DataType="{x:Type vm:BriefpapierViewModel}"><views:BriefpapierView /></DataTemplate>
             <DataTemplate DataType="{x:Type vm:TekstenViewModel}"><views:TekstenView /></DataTemplate>
+            <DataTemplate DataType="{x:Type vm:BackupViewModel}"><views:BackupView /></DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

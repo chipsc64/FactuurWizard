@@ -53,10 +53,15 @@ public class AdresTests
         }
     }
 
-    private static AdresZoeker Zoeker(HttpMessageHandler handler) => new(new HttpClient(handler))
+    /// <remarks>
+    /// Ruime wachttijd voor de BAG-bron: die antwoordt in de tests direct, maar op een drukke machine
+    /// (parallelle tests, koude start) kan het verwerken langer duren. Alleen tests die op een time-out
+    /// wachten, geven een korte wachttijd mee.
+    /// </remarks>
+    private static AdresZoeker Zoeker(HttpMessageHandler handler, int bagMs = 10_000) => new(new HttpClient(handler))
     {
         WachttijdLocatieserver = TimeSpan.FromMilliseconds(200),
-        WachttijdBag = TimeSpan.FromMilliseconds(400),
+        WachttijdBag = TimeSpan.FromMilliseconds(bagMs),
     };
 
     [Fact]
@@ -87,7 +92,7 @@ public class AdresTests
     [Fact]
     public async Task Beide_bronnen_hangen_geeft_geen_antwoord()
     {
-        Assert.Equal(ZoekStatus.GeenAntwoord, (await Zoeker(new Bronnen(null, null)).ZoekAsync("1234AB", "1")).Status);
+        Assert.Equal(ZoekStatus.GeenAntwoord, (await Zoeker(new Bronnen(null, null), bagMs: 300).ZoekAsync("1234AB", "1")).Status);
     }
 
     [Fact]

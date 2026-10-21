@@ -1,0 +1,6 @@
+# Regeleinden in de repository normaliseren; op Windows worden ze bij uitchecken CRLF.
+* text=auto
+
+*.ico binary
+*.png binary
+*.zip binary

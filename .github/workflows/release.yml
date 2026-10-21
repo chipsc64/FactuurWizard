@@ -1,0 +1,30 @@
+# Bouwt en publiceert een release zodra er een versietag wordt gepusht, bijvoorbeeld:
+#   git tag v1.0.1
+#   git push origin v1.0.1
+# Geïnstalleerde versies van FactuurWizard zien de nieuwe versie daarna vanzelf.
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Bouwen, testen en publiceren
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $versie = '${{ github.ref_name }}'.TrimStart('v')
+          ./build/release.ps1 -Versie $versie -Upload -Token $env:GITHUB_TOKEN

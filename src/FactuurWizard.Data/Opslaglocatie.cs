@@ -10,7 +10,17 @@ public class Opslaglocatie
 {
     public const string DatabaseBestandsnaam = "factuurwizard.db";
 
-    private static readonly string InstellingenBestand = Path.Combine(
+    /// <summary>
+    /// In %AppData% (niet %LocalAppData%): daar beheert het installatieprogramma de programmamap en
+    /// verwijdert die bij het verwijderen van FactuurWizard.
+    /// </summary>
+    public static string InstellingenMap { get; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FactuurWizard");
+
+    private static readonly string InstellingenBestand = Path.Combine(InstellingenMap, "opslag.json");
+
+    /// <summary>Locatie uit eerdere versies; wordt nog gelezen als er geen nieuwe instelling is.</summary>
+    private static readonly string OudInstellingenBestand = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FactuurWizard", "opslag.json");
 
     public static string StandaardDataMap => Path.Combine(
@@ -35,18 +45,20 @@ public class Opslaglocatie
         if (Environment.GetEnvironmentVariable("FACTUURWIZARD_DATAMAP") is { Length: > 0 } overschreven)
             return new Opslaglocatie(overschreven);
 
-        try
+        foreach (var bestand in new[] { InstellingenBestand, OudInstellingenBestand })
         {
-            if (File.Exists(InstellingenBestand))
+            try
             {
-                var instellingen = JsonSerializer.Deserialize<Instellingen>(File.ReadAllText(InstellingenBestand));
+                if (!File.Exists(bestand))
+                    continue;
+                var instellingen = JsonSerializer.Deserialize<Instellingen>(File.ReadAllText(bestand));
                 if (!string.IsNullOrWhiteSpace(instellingen?.DataMap))
                     return new Opslaglocatie(instellingen.DataMap);
             }
-        }
-        catch (JsonException)
-        {
-            // Beschadigd instellingenbestand: val terug op de standaardlocatie.
+            catch (JsonException)
+            {
+                // Beschadigd instellingenbestand: probeer de volgende, anders de standaardlocatie.
+            }
         }
         return new Opslaglocatie(StandaardDataMap);
     }

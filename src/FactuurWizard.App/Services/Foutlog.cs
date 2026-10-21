@@ -1,11 +1,11 @@
 using System.IO;
+using FactuurWizard.Data;
 
 namespace FactuurWizard.App.Services;
 
 public static class Foutlog
 {
-    public static string Pad { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FactuurWizard", "fouten.log");
+    public static string Pad { get; } = Path.Combine(Opslaglocatie.InstellingenMap, "fouten.log");
 
     public static void Schrijf(Exception fout)
     {

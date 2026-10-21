@@ -1,5 +1,6 @@
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using FactuurWizard.App.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,11 +18,36 @@ public partial class ShellViewModel : ObservableObject
     private readonly DialoogService _dialogen;
     private bool _selectieOnderdrukken;
 
-    public ShellViewModel(IServiceProvider services, DialoogService dialogen, Navigatie navigatie)
+    public ShellViewModel(IServiceProvider services, DialoogService dialogen, Navigatie navigatie, Updater updater)
     {
         _services = services;
         _dialogen = dialogen;
+        Updater = updater;
         navigatie.Shell = this;
+    }
+
+    public Updater Updater { get; }
+
+    public string VersieTekst => $"Versie {Updater.HuidigeVersie}";
+
+    [RelayCommand]
+    private async Task BijwerkenAsync()
+    {
+        if (!MagPaginaVerlaten())
+            return;
+        // Pagina sluiten, zodat er geen databaseverbinding openstaat tijdens het bijwerken.
+        HuidigePagina?.Dispose();
+        try
+        {
+            await Updater.BijwerkenAsync();
+        }
+        catch (Exception ex)
+        {
+            Foutlog.Schrijf(ex);
+            _dialogen.ToonFout($"Bijwerken is niet gelukt: {ex.Message}");
+            if (GeselecteerdItem is { } item)
+                await ToonAsync((PaginaViewModel)_services.GetRequiredService(item.PaginaType));
+        }
     }
 
     public IReadOnlyList<NavigatieItem> Items { get; } =
@@ -34,6 +60,7 @@ public partial class ShellViewModel : ObservableObject
         new("Inrichting", "Producten en diensten", typeof(ArtikelenViewModel)),
         new("Inrichting", "Briefpapier", typeof(BriefpapierViewModel)),
         new("Inrichting", "Vaste teksten", typeof(TekstenViewModel)),
+        new("Inrichting", "Backup", typeof(BackupViewModel)),
     ];
 
     [ObservableProperty]
